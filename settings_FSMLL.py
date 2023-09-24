@@ -14,7 +14,8 @@ from numpy.fft import fft,ifft,fftshift,ifftshift
 from matplotlib import cm
 from scipy.special import jv
 
-mpl.rcParams['font.sans-serif'] = ['Microsoft YaHei'] # 指定默认字体
+# mpl.rcParams['font.sans-serif'] = ['Microsoft YaHei'] # 指定默认字体
+mpl.rcParams['font.sans-serif'] = ['Arial Unicode MS']
 mpl.rcParams['axes.unicode_minus'] = False # 解决保存图像是负号'-'显示为方块的问题
 plt.rcParams['font.size'] = 14  #设置字体大小，全局有效
 
