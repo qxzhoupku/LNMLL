@@ -8,8 +8,6 @@ import random
 import time
 
 
-
-
 #! Lasing parameters of Erbium
 
 N=3.959e26 # Er离子浓度: m^-3
@@ -57,7 +55,8 @@ Q_totp = 0.2e6
 gamma=0 # 电光梳在波导和谐振腔耦合处的损耗
 k=omega_p/omega_m/Q_exp*2*pi # 电光梳在波导和谐振腔耦合处的耦合效率
 # M=0.1 # 电光调制深度
-M = float(input("Type in the depth of modulation: "))
+# M = float(input("Type in the depth of modulation: "))
+M = float(sys.argv[1])
 phi_opt=0.0 # pump光的失谐
 t=np.linspace(-T_R/2,T_R/2-T_R/1023,1024)
 q=np.linspace(-512,511,1024)
@@ -68,9 +67,12 @@ delta=n2*omega_s*L_d/(c0*A_s) # Kerr效应的系数δ
 l=-0.5*np.log(1-2*pi*omega_s/Q_tots/omega_m) # Haus方程中的loss,包含signal光由于本征/耦合的损耗
 l_p_in=np.exp(-2*pi*omega_p/omega_m/Q_inp/2)
 # P_pump=200e-3
-P_pump = float(input("Type in the pump power: "))
-prompt = "M=" + str(M) + ",P_pump=" + str(P_pump) + "mW"
+# P_pump = float(input("Type in the pump power: "))
+P_pump = float(sys.argv[2])
+prompt = "P_pump=" + str(P_pump*1000) + "mW" + ",M=" + str(M)
 
+
+os.chdir("../outputs")
 
 # 时间normalize到T_R
 scale=1 # 每保存一次运行scale个roundtrip time
@@ -248,7 +250,7 @@ plt.figure("Output EO comb pulse train",figsize=(9,3),dpi=100)
 plt.plot((np.array(range(len(time_domain_p)))*T_R*1e9/1024)[t_center_p-t_range_p:t_center_p+t_range_p],(1e3*np.abs(time_domain_p)**2)[t_center_p-t_range_p:t_center_p+t_range_p],color="red")
 plt.xlabel("time (ns)")
 plt.ylabel("power (mW)")
-plt.savefig("./pump_2" + prompt + ".png",dpi=600,bbox_inches="tight",transparent=True)
+plt.savefig(prompt + "pump" +".png",dpi=600,bbox_inches="tight",transparent=True)
 # plt.show()
 
 
@@ -261,7 +263,7 @@ plt.figure("Spectrum of pump",figsize=(9,3),dpi=100)
 plt.plot(1e9*lamb_list_p[k_center_p-k_range_p:k_center_p+k_range_p],spectrum_p_log[k_center_p-k_range_p:k_center_p+k_range_p],color="blue")
 plt.xlabel("Wavelength (nm)")
 plt.ylabel("Power (dBm)")
-plt.savefig("./pump_spectrum_1" + prompt + ".png",dpi=600,bbox_inches="tight",transparent=True)
+plt.savefig(prompt + "pump_spectrum" + ".png",dpi=600,bbox_inches="tight",transparent=True)
 # plt.show()
 print(max(spectrum_p_log))
 
@@ -291,7 +293,7 @@ plt.figure("Pulse Train of signal",figsize=(9,3),dpi=100)
 plt.plot((np.array(range(len(time_domain)))*T_R*1e9/1024)[t_center-t_range:t_center+t_range],(1e3*np.abs(time_domain)**2)[t_center-t_range:t_center+t_range],color="red")
 plt.xlabel("time (ns)")
 plt.ylabel("power (mW)")
-plt.savefig("./signal_2" + prompt + ".png",dpi=600,bbox_inches="tight",transparent=True)
+plt.savefig(prompt + "signal" + ".png",dpi=600,bbox_inches="tight",transparent=True)
 # plt.show()
 
 
@@ -304,7 +306,7 @@ plt.figure("Spectrum of signal",figsize=(9,3),dpi=100)
 plt.plot(1e9*lamb_list[k_center-k_range:k_center+k_range],spectrum_log[k_center-k_range:k_center+k_range],color="blue")
 plt.xlabel("Wavelength (nm)")
 plt.ylabel("Power (dBm)")
-plt.savefig("./signal_spectrum_2_2" + prompt + ".png",dpi=1200,bbox_inches="tight",transparent=True)
+plt.savefig(prompt + "signal_spectrum" + ".png",dpi=1200,bbox_inches="tight",transparent=True)
 # plt.show()
 print(max(spectrum_log))
 
@@ -366,7 +368,7 @@ plt.xlabel("Roundtrip")
 plt.ylabel("t (ps)")
 plt.title("Intra-cavity signal Evolution (mW)")
 plt.colorbar()
-plt.savefig("./" + prompt + ".png",dpi=600,transparent=True,bbox_inches="tight")
+plt.savefig(prompt + "signal_evolution" + ".png",dpi=600,transparent=True,bbox_inches="tight")
 # plt.show()
 plt.cla()
 plt.close()
@@ -380,7 +382,7 @@ plt.xlabel("Roundtrip")
 plt.ylabel("t (ps)")
 plt.title("Intra-cavity pump Evolution (mW)")
 plt.colorbar()
-plt.savefig("./" + prompt + ".png",dpi=600,transparent=True,bbox_inches="tight")
+plt.savefig(prompt + "pump_evolution" + ".png",dpi=600,transparent=True,bbox_inches="tight")
 # plt.show()
 plt.cla()
 plt.close()
