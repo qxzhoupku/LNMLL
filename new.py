@@ -164,7 +164,7 @@ rsignal_power = signal_power
 # rsignal_power = np.sum(abs(E_rsignal)**2)/T_R*delta_t
 tau_prime = (1 + beta) / (1 / tau_g + (1 + beta + beta * sigma_pe / sigma_pa) * pump_power * sigma_pa * Gamma_p / h / nu_p / A_p)
 p_sat = h * nu_s * A_s / (Gamma_s * tau_prime * (sigma_sa + sigma_se / (1 + beta)))
-g_0 = 0.5 * Gamma_s * L_d * sigma_se * (1 + beta) * N / tau_prime * ((1 - sigma_sa / sigma_se * beta * sigma_pe / sigma_pa) * sigma_pa * Gamma_p / h / nu_p / A_p * pump_power - sigma_sa / sigma_se / tau_g)
+g_0 = 0.5 * Gamma_s * L_d * sigma_se * N * tau_prime / (1 + beta) * ((1 - sigma_sa / sigma_se * beta * sigma_pe / sigma_pa) * sigma_pa * Gamma_p / h / nu_p / A_p * pump_power - sigma_sa / sigma_se / tau_g)
 g = g_0
 print("g_0 = ", g_0)
 
@@ -184,9 +184,6 @@ for _i in range(save_round2):
         signal_power=np.sum(abs(A)**2)/T_R*delta_t
         rsignal_power = signal_power
         # rsignal_power = 0
-        tau_prime = (1 + beta) / (1 / tau_g + (1 + beta + beta * sigma_pe / sigma_pa) * pump_power * sigma_pa * Gamma_p / h / nu_p / A_p)
-        p_sat = h * nu_s * A_s / (Gamma_s * tau_prime * (sigma_sa + sigma_se / (1 + beta)))
-        g_0 = 0.5 * Gamma_s * L_d * sigma_se * (1 + beta) * N / tau_prime * ((1 - sigma_sa / sigma_se * beta * sigma_pe / sigma_pa) * sigma_pa * Gamma_p / h / nu_p / A_p * pump_power - sigma_sa / sigma_se / tau_g)
         # print("g_0 = ", g_0)
         l_p_Er=np.exp(0.5*Gamma_p*L_d*N*sigma_pa*((1+beta+beta*sigma_pe/sigma_pa)*(pump_power/A_p/b_pa+(signal_power + rsignal_power)/A_s/b_sa)/(1+(1+beta)*pump_power/A_p/b_pa+beta*pump_power/A_p/b_pe+(1+beta+eta)*(signal_power + rsignal_power)/A_s/b_sa)-1))
         l_p_tot=l_p_in*l_p_Er
