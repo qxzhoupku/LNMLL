@@ -167,14 +167,14 @@ p_sat = h * nu_s * A_s / (Gamma_s * tau_prime * (sigma_sa + sigma_se / (1 + beta
 g_0 = 0.5 * Gamma_s * L_d * sigma_se * N * tau_prime / (1 + beta) * ((1 - sigma_sa / sigma_se * beta * sigma_pe / sigma_pa) * sigma_pa * Gamma_p / h / nu_p / A_p * pump_power - sigma_sa / sigma_se / tau_g)
 g = g_0
 print("g_0 = ", g_0)
+print("tau_prime = ", tau_prime, end="; ")
+print("p_sat = ", p_sat, end="; ")
 
 for _i in range(save_round2):
     print("process:", _i/save_round2, end="; ")
-    print("tau_prime = ", tau_prime, end="; ")
-    print("p_sat = ", p_sat, end="; ")
     print("g =", g, end="; ")
-    # print("signal_power/P_sat =", signal_power/p_sat, end='          \r')
-    print("signal_power/P_sat =", signal_power/p_sat)
+    print("signal_power/P_sat =", signal_power/p_sat, end='          \r')
+    # print("signal_power/P_sat =", signal_power/p_sat)
     for _j in range(scale):
         # E_ase_modified = E_ase * np.array([np.exp(1.0j * random.random() * 2 * pi) for i in range(1024)])
         # A = ifft(fft(A) + fft(E_ase_modified))
