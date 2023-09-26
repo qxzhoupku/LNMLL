@@ -7,6 +7,9 @@ from settings_FSMLL import *
 import random
 import time
 
+if (len(sys.argv) != 3):
+    print("Usage: python simulation.py M P_pump")
+    exit(1)
 
 #! Lasing parameters of Erbium
 
@@ -193,7 +196,7 @@ for _i in range(save_round2):
             signal_power=np.sum(abs(A)**2)/T_R*delta_t
             rsignal_power = signal_power
             # rsignal_power = 0
-            g = g + dT / tau_prime * (g_0 - (1 + signal_power / p_sat) * g)
+            g = g + dT * T_R / tau_prime * (g_0 - (1 + signal_power / p_sat) * g)
             r=-1.0j*D*omega_m**2*q**2+g/(1+(omega_m/Omega_g*q)**2)
             A_spectrum=A_spectrum*np.exp(dT*r)
             A=ifft(ifftshift(A_spectrum))

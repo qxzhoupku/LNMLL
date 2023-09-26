@@ -21,6 +21,7 @@ import sys
 mpl.rcParams['font.sans-serif'] = ['Arial Unicode MS']
 mpl.rcParams['axes.unicode_minus'] = False # 解决保存图像是负号'-'显示为方块的问题
 plt.rcParams['font.size'] = 14  #设置字体大小，全局有效
+plt.rcParams['agg.path.chunksize'] = 120
 
 c0=299792458
 pi=3.14159265359 # 圆周率
