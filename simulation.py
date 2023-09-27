@@ -196,7 +196,8 @@ for _i in range(save_round2):
         rsignal_power = signal_power
         # rsignal_power = 0
         # print("g_0 = ", g_0)
-        l_p_Er=np.exp(0.5*Gamma_p*L_d*N*sigma_pa*((1+beta+beta*sigma_pe/sigma_pa)*(pump_power/A_p/b_pa+(signal_power + rsignal_power)/A_s/b_sa)/(1+(1+beta)*pump_power/A_p/b_pa+beta*pump_power/A_p/b_pe+(1+beta+eta)*(signal_power + rsignal_power)/A_s/b_sa)-1))
+        # l_p_Er=np.exp(0.5*Gamma_p*L_d*N*sigma_pa*((1+beta+beta*sigma_pe/sigma_pa)*(pump_power/A_p/b_pa+(signal_power + rsignal_power)/A_s/b_sa)/(1+(1+beta)*pump_power/A_p/b_pa+beta*pump_power/A_p/b_pe+(1+beta+eta)*(signal_power + rsignal_power)/A_s/b_sa)-1))
+        l_p_Er = np.exp(0.5 * Gamma_p * L_d * N * (sigma_pe * beta / (1 + beta) - (sigma_pe * beta / (1 + beta) + sigma_pa) / (1 + sigma_sa / sigma_se * (1 + beta))) + (sigma_pe * beta + sigma_pa * (1 + beta)) / (sigma_se * beta + sigma_sa * (1 + beta))) * g
         l_p_tot=l_p_in*l_p_Er
         # A_spectrum
         for _k in range(steps): # k循环steps次，演化一个roundtrip time，因为dT=1/steps
