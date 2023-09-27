@@ -2,10 +2,10 @@ import os
 import sys
 import multiprocessing as mp
 
-# list_M = [0.1, 0.2, 0.3, 0.4]
-list_M = [0.1]
-# list_P_pump = [10, 20, 100]
-list_P_pump = [10]
+list_M = [0.1, 0.2, 0.3, 0.4, 0.5, 0.8, 1.0]
+# list_M = [0.1]
+list_P_pump = [10e-3, 20e-3, 100e-3, 200e-3]
+# list_P_pump = [10]
 
 pool = []
 for M in list_M:

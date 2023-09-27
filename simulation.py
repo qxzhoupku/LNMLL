@@ -11,6 +11,8 @@ if (len(sys.argv) != 3):
     print("Usage: python simulation.py M P_pump")
     exit(1)
 
+# sys.stderr = open("errout.txt", "w")
+
 #! Lasing parameters of Erbium
 
 N=3.959e26 # Er离子浓度: m^-3
@@ -73,7 +75,10 @@ l_p_in=np.exp(-2*pi*omega_p/omega_m/Q_inp/2)
 # P_pump = float(input("Type in the pump power: "))
 P_pump = float(sys.argv[2])
 prompt = "P_pump=" + str(P_pump*1000) + "mW" + ",M=" + str(M)
+print(prompt)
 
+#改变输出到文件
+sys.stdout = open(prompt + ".txt",'w')
 
 os.chdir("../outputs")
 
@@ -126,9 +131,9 @@ def roundtrip_evolution_for_ase(E_ase, loss, alpha):
 # simulation of mode locking
 
 # 初始的pump光场：未加电光调制，腔内为CW场，泵浦与耗散相平衡
-E_0p=1.0j*total_loss*np.sqrt(k)/(1.0-total_loss*np.sqrt(1-k)*np.exp(-1.0j*phi_opt))*np.sqrt(P_pump)*np.exp(-1.0j*phi_opt)*np.exp(-0.0j*t)
-
-E_ase = 0.0j*np.exp(-0.0j*t)
+E_0p=1.0j*total_loss*np.sqrt(k)/(1.0-total_loss*np.sqrt(1-k)*np.exp(-1.0j*phi_opt))*np.sqrt(P_pump)*np.exp(-1.0j*phi_opt)*np.exp(-1.0j * omega_p * t)
+print("total_loss = " + str(total_loss))
+E_ase = 0.0j*np.exp(-1.0j*t)
 E_rsignal = np.array([random.random()*np.exp(1.0j*random.random()*2*pi) for i in range(1024)])*1e-3
 
 # 初始signal光场为噪声
@@ -168,14 +173,19 @@ p_sat = h * nu_s * A_s / (Gamma_s * tau_prime * (sigma_sa + sigma_se / (1 + beta
 g_0 = 0.5 * Gamma_s * L_d * sigma_se * N * tau_prime / (1 + beta) * ((1 - sigma_sa / sigma_se * beta * sigma_pe / sigma_pa) * sigma_pa * Gamma_p / h / nu_p / A_p * pump_power - sigma_sa / sigma_se / tau_g)
 g = g_0
 print("g_0 = ", g_0)
-print("tau_prime = ", tau_prime, end="; ")
-print("p_sat = ", p_sat, end="; ")
+print("tau_prime = ", tau_prime)
+print("p_sat = ", p_sat)
+
+def next_g(g, g_0, signal_power, p_sat, dT):
+    delta_g = dT * T_R / tau_prime * (g_0 - (1 + signal_power / p_sat) * g)
+    g_limit = g_0 / (1 + signal_power / p_sat)
+    if (g + delta_g > g_limit):
+        return g_limit
+    else:
+        return g + delta_g
 
 for _i in range(save_round2):
-    print("process:", _i/save_round2, end="; ")
-    print("g =", g, end="; ")
-    print("signal_power/P_sat =", signal_power/p_sat, end='          \r')
-    # print("signal_power/P_sat =", signal_power/p_sat)
+    sys.stderr.write("process: %.2f%%, g = %f, signal_power/p_sat = %f, pump_power = %f           \r" % (_i/save_round2 * 100, g, signal_power/p_sat, pump_power))
     for _j in range(scale):
         # E_ase_modified = E_ase * np.array([np.exp(1.0j * random.random() * 2 * pi) for i in range(1024)])
         # A = ifft(fft(A) + fft(E_ase_modified))
@@ -196,7 +206,7 @@ for _i in range(save_round2):
             signal_power=np.sum(abs(A)**2)/T_R*delta_t
             rsignal_power = signal_power
             # rsignal_power = 0
-            g = g + dT * T_R / tau_prime * (g_0 - (1 + signal_power / p_sat) * g)
+            g = next_g(g, g_0, signal_power, p_sat, dT)
             r=-1.0j*D*omega_m**2*q**2+g/(1+(omega_m/Omega_g*q)**2)
             A_spectrum=A_spectrum*np.exp(dT*r)
             A=ifft(ifftshift(A_spectrum))
@@ -268,7 +278,7 @@ plt.xlabel("Wavelength (nm)")
 plt.ylabel("Power (dBm)")
 plt.savefig(prompt + "pump_spectrum" + ".png",dpi=600,bbox_inches="tight",transparent=True)
 # plt.show()
-print(max(spectrum_p_log))
+print("max spectrum_p_log =", max(spectrum_p_log))
 
 
 
