@@ -78,9 +78,9 @@ prompt = "P_pump=" + str(P_pump*1000) + "mW" + ",M=" + str(M)
 print(prompt)
 
 #改变输出到文件
+os.chdir("../outputs")
 sys.stdout = open(prompt + ".txt",'w')
 
-os.chdir("../outputs")
 
 # 时间normalize到T_R
 scale=1 # 每保存一次运行scale个roundtrip time
