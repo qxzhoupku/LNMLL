@@ -2,7 +2,7 @@
 # coding: utf-8
 
 
-
+# from tqdm import tqdm
 from settings_FSMLL import *
 import random
 import time
@@ -179,7 +179,7 @@ print("p_sat = ", p_sat)
 def next_g(g, g_0, signal_power, p_sat, dT):
     delta_g = dT * T_R / tau_prime * (g_0 - (1 + signal_power / p_sat) * g)
     g_limit = g_0 / (1 + signal_power / p_sat)
-    if (g + delta_g > g_limit):
+    if (delta_g > 0 and g + delta_g > g_limit or delta_g < 0 and g + delta_g < g_limit):
         return g_limit
     else:
         return g + delta_g
@@ -263,7 +263,7 @@ plt.figure("Output EO comb pulse train",figsize=(9,3),dpi=100)
 plt.plot((np.array(range(len(time_domain_p)))*T_R*1e9/1024)[t_center_p-t_range_p:t_center_p+t_range_p],(1e3*np.abs(time_domain_p)**2)[t_center_p-t_range_p:t_center_p+t_range_p],color="red")
 plt.xlabel("time (ns)")
 plt.ylabel("power (mW)")
-plt.savefig(prompt + "pump" +".png",dpi=600,bbox_inches="tight",transparent=True)
+plt.savefig("pump_" + prompt +".png",dpi=600,bbox_inches="tight",transparent=True)
 # plt.show()
 
 
@@ -276,7 +276,7 @@ plt.figure("Spectrum of pump",figsize=(9,3),dpi=100)
 plt.plot(1e9*lamb_list_p[k_center_p-k_range_p:k_center_p+k_range_p],spectrum_p_log[k_center_p-k_range_p:k_center_p+k_range_p],color="blue")
 plt.xlabel("Wavelength (nm)")
 plt.ylabel("Power (dBm)")
-plt.savefig(prompt + "pump_spectrum" + ".png",dpi=600,bbox_inches="tight",transparent=True)
+plt.savefig("pump_spectrum_" + prompt + ".png",dpi=600,bbox_inches="tight",transparent=True)
 # plt.show()
 print("max spectrum_p_log =", max(spectrum_p_log))
 
@@ -306,7 +306,7 @@ plt.figure("Pulse Train of signal",figsize=(9,3),dpi=100)
 plt.plot((np.array(range(len(time_domain)))*T_R*1e9/1024)[t_center-t_range:t_center+t_range],(1e3*np.abs(time_domain)**2)[t_center-t_range:t_center+t_range],color="red")
 plt.xlabel("time (ns)")
 plt.ylabel("power (mW)")
-plt.savefig(prompt + "signal" + ".png",dpi=600,bbox_inches="tight",transparent=True)
+plt.savefig("signal_" + prompt + ".png",dpi=600,bbox_inches="tight",transparent=True)
 # plt.show()
 
 
@@ -319,7 +319,7 @@ plt.figure("Spectrum of signal",figsize=(9,3),dpi=100)
 plt.plot(1e9*lamb_list[k_center-k_range:k_center+k_range],spectrum_log[k_center-k_range:k_center+k_range],color="blue")
 plt.xlabel("Wavelength (nm)")
 plt.ylabel("Power (dBm)")
-plt.savefig(prompt + "signal_spectrum" + ".png",dpi=1200,bbox_inches="tight",transparent=True)
+plt.savefig("signal_spectrum_" + prompt + ".png",dpi=1200,bbox_inches="tight",transparent=True)
 # plt.show()
 print(max(spectrum_log))
 
@@ -369,6 +369,7 @@ plt.legend()
 plt.xlabel("Roundtrip Time")
 plt.ylabel("Gain")
 # plt.show()
+plt.savefig("Gain" + prompt + ".png",dpi=600,bbox_inches="tight",transparent=True)
 plt.cla()
 plt.close()
 
@@ -381,7 +382,7 @@ plt.xlabel("Roundtrip")
 plt.ylabel("t (ps)")
 plt.title("Intra-cavity signal Evolution (mW)")
 plt.colorbar()
-plt.savefig(prompt + "signal_evolution" + ".png",dpi=600,transparent=True,bbox_inches="tight")
+plt.savefig("signal_evolution_" + prompt + ".png",dpi=600,transparent=True,bbox_inches="tight")
 # plt.show()
 plt.cla()
 plt.close()
@@ -395,7 +396,7 @@ plt.xlabel("Roundtrip")
 plt.ylabel("t (ps)")
 plt.title("Intra-cavity pump Evolution (mW)")
 plt.colorbar()
-plt.savefig(prompt + "pump_evolution" + ".png",dpi=600,transparent=True,bbox_inches="tight")
+plt.savefig("pump_evolution_" + prompt + ".png",dpi=600,transparent=True,bbox_inches="tight")
 # plt.show()
 plt.cla()
 plt.close()
