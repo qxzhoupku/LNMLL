@@ -7,14 +7,14 @@ from settings_FSMLL import *
 import random
 import time
 
-if (len(sys.argv) != 3):
+if (len(sys.argv) < 3):
     print("Usage: python simulation.py M P_pump")
     exit(1)
+if (len(sys.argv) == 4 and sys.argv[3] == "debug"):
+    sys.stderr = open("errout.txt", "w")
 
-# sys.stderr = open("errout.txt", "w")
 
 #! Lasing parameters of Erbium
-
 N=3.959e26 # Er离子浓度: m^-3
 sigma_sa=4.03e-25 # signal的吸收截面: m^2
 sigma_se=6.76e-25 # signal的发射截面: m^2
@@ -42,7 +42,6 @@ eta=sigma_se/sigma_sa
 beta=np.exp(-1.0/k_B/T*h*c0*(1.0/lambda_p-1.0/lambda_s))
 
 #! Micro-cavity parameters
-
 beta2=-58e-27 # 色散: s^2/m
 n2=1.8e-19 # LiNbO3的Kerr系数: m^2/W
 FSR=25e9 # Free spectral range: Hz
@@ -81,7 +80,6 @@ print(prompt)
 os.chdir("../outputs")
 sys.stdout = open(prompt + ".txt",'w')
 
-
 # 时间normalize到T_R
 scale=1 # 每保存一次运行scale个roundtrip time
 steps = 100
@@ -94,7 +92,6 @@ begin_to_save=00000
 
 
 #! Roundtrip phase model for EO comb
-
 def roundtrip_evolution_for_EO_comb(E_np,total_loss):
     '''一圈之后pump电场的变化,电场normalize到光功率的平方根'''
     spectrum=fftshift(fft(E_np))
@@ -106,7 +103,6 @@ def roundtrip_evolution_for_EO_comb(E_np,total_loss):
     return new_field
 
 #! Roundtrip phase model for signal
-
 def roundtrip_evolution_for_signal(A_ns,loss,gain):
     '''一圈之后signal电场的变化,电场normalize到光功率的平方根'''
     spectrum=fftshift(fft(A_ns))
@@ -129,7 +125,6 @@ def roundtrip_evolution_for_ase(E_ase, loss, alpha):
 
 
 # simulation of mode locking
-
 # 初始的pump光场：未加电光调制，腔内为CW场，泵浦与耗散相平衡
 E_0p=1.0j*total_loss*np.sqrt(k)/(1.0-total_loss*np.sqrt(1-k)*np.exp(-1.0j*phi_opt))*np.sqrt(P_pump)*np.exp(-1.0j*phi_opt)*np.exp(-1.0j * omega_p * t)
 print("total_loss = " + str(total_loss))
@@ -162,12 +157,9 @@ delta_t = t[-1]-t[-2]
 
 
 
-# ase_power = np.sum(abs(E_ase)**2)/T_R*delta_t
 pump_power=np.sum(abs(E_p)**2)/T_R*delta_t
 signal_power=np.sum(abs(A)**2)/T_R*delta_t
 rsignal_power = signal_power
-# rsignal_power = 0
-# rsignal_power = np.sum(abs(E_rsignal)**2)/T_R*delta_t
 tau_prime = (1 + beta) / (1 / tau_g + (1 + beta + beta * sigma_pe / sigma_pa) * pump_power * sigma_pa * Gamma_p / h / nu_p / A_p)
 p_sat = h * nu_s * A_s / (Gamma_s * tau_prime * (sigma_sa + sigma_se / (1 + beta)))
 g_0 = 0.5 * Gamma_s * L_d * sigma_se * N * tau_prime / (1 + beta) * ((1 - sigma_sa / sigma_se * beta * sigma_pe / sigma_pa) * sigma_pa * Gamma_p / h / nu_p / A_p * pump_power - sigma_sa / sigma_se / tau_g)
@@ -179,27 +171,26 @@ print("p_sat = ", p_sat)
 def next_g(g, g_0, signal_power, p_sat, dT):
     delta_g = dT * T_R / tau_prime * (g_0 - (1 + signal_power / p_sat) * g)
     g_limit = g_0 / (1 + signal_power / p_sat)
-    if (delta_g > 0 and g + delta_g > g_limit or delta_g < 0 and g + delta_g < g_limit):
+    if (delta_g > 0 and g + delta_g > g_limit):
+        return g_limit
+    elif (delta_g < 0 and g + delta_g < g_limit):
         return g_limit
     else:
         return g + delta_g
+        return g_limit
 
 for _i in range(save_round2):
     sys.stderr.write("process: %.2f%%, g = %f, signal_power/p_sat = %f, pump_power = %f           \r" % (_i/save_round2 * 100, g, signal_power/p_sat, pump_power))
     for _j in range(scale):
-        # E_ase_modified = E_ase * np.array([np.exp(1.0j * random.random() * 2 * pi) for i in range(1024)])
-        # A = ifft(fft(A) + fft(E_ase_modified))
-        # ase_power = np.sum(abs(E_ase)**2)/T_R*delta_t
-        # ase_power = 0
         pump_power=np.sum(abs(E_p)**2)/T_R*delta_t
         signal_power=np.sum(abs(A)**2)/T_R*delta_t
         rsignal_power = signal_power
-        # rsignal_power = 0
-        # print("g_0 = ", g_0)
         # l_p_Er=np.exp(0.5*Gamma_p*L_d*N*sigma_pa*((1+beta+beta*sigma_pe/sigma_pa)*(pump_power/A_p/b_pa+(signal_power + rsignal_power)/A_s/b_sa)/(1+(1+beta)*pump_power/A_p/b_pa+beta*pump_power/A_p/b_pe+(1+beta+eta)*(signal_power + rsignal_power)/A_s/b_sa)-1))
+        tau_prime = (1 + beta) / (1 / tau_g + (1 + beta + beta * sigma_pe / sigma_pa) * pump_power * sigma_pa * Gamma_p / h / nu_p / A_p)
+        p_sat = h * nu_s * A_s / (Gamma_s * tau_prime * (sigma_sa + sigma_se / (1 + beta)))
+        g_0 = 0.5 * Gamma_s * L_d * sigma_se * N * tau_prime / (1 + beta) * ((1 - sigma_sa / sigma_se * beta * sigma_pe / sigma_pa) * sigma_pa * Gamma_p / h / nu_p / A_p * pump_power - sigma_sa / sigma_se / tau_g)
         l_p_Er = np.exp(0.5 * Gamma_p * L_d * N * (beta * sigma_pe * sigma_sa - sigma_pa * sigma_se) / (sigma_se + sigma_sa * (1 + beta)) + (sigma_pe * beta + sigma_pa * (1 + beta)) / (sigma_se * beta + sigma_sa * (1 + beta))) * g
         l_p_tot=l_p_in*l_p_Er
-        # A_spectrum
         for _k in range(steps): # k循环steps次，演化一个roundtrip time，因为dT=1/steps
             # LLE 演化
             A=A*np.exp((-l+1.0j*delta*abs(A**2)+1.0j*M*np.cos(x))*dT)
@@ -224,42 +215,26 @@ for _i in range(save_round2):
 
 
 
-
-
-
-
-
-
 A_save=np.array(A_save).T
 g_save=np.array(g_save)
 E_p_save=np.array(E_p_save).T
-
 T=np.array(range(begin_to_save,int(save_round2)))*scale
 T_G=np.array(range(int(save_round2)))*scale
 x,y=np.meshgrid(T,t)
 
 
-
-
 time_domain_p=[]
-
 for i in range(-1-1024*4,-1):
     time_domain_p+=list(E_p_save[:,i])
-
 time_domain_p=np.array(time_domain_p)*np.sqrt(2*pi*omega_p/Q_exp/omega_m)*1.0j+np.sqrt(1-2*pi*omega_p/Q_exp/omega_m)*np.sqrt(P_pump)
-
 spectrum_p=fftshift(fft(time_domain_p*delta_t))
 spectrum_p_log=10*np.log10(np.abs(spectrum_p/T_R/(len(time_domain_p)/1024))**2/1e-3)
-
 freq_list_p=np.linspace(c0/lambda_p-512*FSR,c0/lambda_p+512*FSR,len(time_domain_p))
 lamb_list_p=c0/freq_list_p
 
 
-
-
 t_center_p=len(time_domain_p)//2
 t_range_p=len(time_domain_p)//4096
-
 plt.figure("Output EO comb pulse train",figsize=(9,3),dpi=100)
 plt.plot((np.array(range(len(time_domain_p)))*T_R*1e9/1024)[t_center_p-t_range_p:t_center_p+t_range_p],(1e3*np.abs(time_domain_p)**2)[t_center_p-t_range_p:t_center_p+t_range_p],color="red")
 plt.xlabel("time (ns)")
@@ -268,11 +243,8 @@ plt.savefig("pump_" + prompt +".png",dpi=600,bbox_inches="tight",transparent=Tru
 # plt.show()
 
 
-
-
 k_center_p=len(spectrum_p)//2
 k_range_p=len(spectrum_p)//10
-
 plt.figure("Spectrum of pump",figsize=(9,3),dpi=100)
 plt.plot(1e9*lamb_list_p[k_center_p-k_range_p:k_center_p+k_range_p],spectrum_p_log[k_center_p-k_range_p:k_center_p+k_range_p],color="blue")
 plt.xlabel("Wavelength (nm)")
@@ -282,35 +254,24 @@ plt.savefig("pump_spectrum_" + prompt + ".png",dpi=600,bbox_inches="tight",trans
 print("max spectrum_p_log =", max(spectrum_p_log))
 
 
-
-
 time_domain=[]
-
 for i in range(-1-1024*8,-1):
     time_domain+=list(A_save[:,i])
-
 time_domain=np.array(time_domain)*np.sqrt(2*pi*omega_s/Q_tots/omega_m)
-
 spectrum=fftshift(fft(time_domain*delta_t))
 spectrum_log=10*np.log10(np.abs(spectrum/T_R/(len(time_domain)/1024))**2/1e-3)
-
 freq_list=np.linspace(c0/lambda_s-512*FSR,c0/lambda_s+512*FSR,len(time_domain))
 lamb_list=c0/freq_list
 
 
-
-
 t_center=len(time_domain)//2
 t_range=len(time_domain)//2048
-
 plt.figure("Pulse Train of signal",figsize=(9,3),dpi=100)
 plt.plot((np.array(range(len(time_domain)))*T_R*1e9/1024)[t_center-t_range:t_center+t_range],(1e3*np.abs(time_domain)**2)[t_center-t_range:t_center+t_range],color="red")
 plt.xlabel("time (ns)")
 plt.ylabel("power (mW)")
 plt.savefig("signal_" + prompt + ".png",dpi=600,bbox_inches="tight",transparent=True)
 # plt.show()
-
-
 
 
 k_center=len(spectrum)//2
@@ -350,17 +311,13 @@ print(np.sum(np.abs(time_domain)**2)*delta_t/(len(time_domain)/1024)/T_R/P_pump*
 
 
 
-
 # 本次运行的相关信息
-
 print("pump光(功率)的耦合损耗: k= "+str(k))
 print("pump光(功率)的本征损耗: α= "+str(2*pi*omega_p/Q_inp/omega_m))
 print("pump光(功率)的总损耗: l= "+str(total_loss))
 print("signal光(功率)的耦合损耗: k'= "+str(2*pi*omega_s/Q_exs/omega_m))
 print("signal光(功率)的本征损耗: α'= "+str(2*pi*omega_s/Q_ins/omega_m))
 print("signal光(功率)的总损耗: l'= "+str(2*pi*omega_s/Q_tots/omega_m))
-
-
 
 
 plt.figure("Gain",figsize=(14,7),dpi=100)
@@ -375,8 +332,6 @@ plt.cla()
 plt.close()
 
 
-
-
 plt.figure("Time Evolution",figsize=(10,4),dpi=100)
 plt.contourf(x,y*1e12,1000*np.abs(A_save)**2,100,cmap=cm.jet)
 plt.xlabel("Roundtrip")
@@ -387,8 +342,6 @@ plt.savefig("signal_evolution_" + prompt + ".png",dpi=600,transparent=True,bbox_
 # plt.show()
 plt.cla()
 plt.close()
-
-
 
 
 plt.figure("Time Evolution2",figsize=(10,4),dpi=100)
@@ -403,14 +356,7 @@ plt.cla()
 plt.close()
 
 
-
-
 # np.save("./1A_save.npy",A_save)
 # np.save("./1E_p_save.npy",E_p_save)
 # np.save("./1g_save.npy",g_save)
-
-
-
-
-
 
