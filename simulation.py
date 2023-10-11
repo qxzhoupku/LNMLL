@@ -7,10 +7,10 @@ from settings_FSMLL import *
 import random
 import time
 
-if (len(sys.argv) < 3):
-    print("Usage: python simulation.py M P_pump")
+if (len(sys.argv) < 4):
+    print("Usage: python simulation.py M P_pump FSR [debug]")
     exit(1)
-if (len(sys.argv) == 4 and sys.argv[3] == "debug"):
+if (len(sys.argv) == 5 and sys.argv[3] == "debug"):
     sys.stderr = open("errout.txt", "w")
 
 
@@ -32,7 +32,6 @@ A_p=0.9e-12 # pump有效模面积: m^2
 T=300 # 温度: K
 Gamma_s=0.9 # signal与Er离子的模斑交叠系数
 Gamma_p=0.9 # pump与Er离子的模斑交叠系数
-L_d=5e-3 # 腔长: m
 b_pa=h*nu_p/tau_g/sigma_pa
 b_pe=h*nu_p/tau_g/sigma_pe
 b_sa=h*nu_s/tau_g/sigma_sa
@@ -44,7 +43,9 @@ beta=np.exp(-1.0/k_B/T*h*c0*(1.0/lambda_p-1.0/lambda_s))
 #! Micro-cavity parameters
 beta2=-58e-27 # 色散: s^2/m
 n2=1.8e-19 # LiNbO3的Kerr系数: m^2/W
-FSR=25e9 # Free spectral range: Hz
+FSR = float(sys.argv[3])
+# FSR=25e9 # Free spectral range: Hz
+L_d=5e-3 * 25e9 / FSR # 腔长: m
 T_R=1.0/FSR # roundtrip time: s
 omega_m=2*pi*FSR
 Omega_g=2*pi*3e8/(1570e-9)**2*85e-9 # 增益的半高半宽: rad
@@ -73,7 +74,7 @@ l_p_in=np.exp(-2*pi*omega_p/omega_m/Q_inp/2)
 # P_pump=200e-3
 # P_pump = float(input("Type in the pump power: "))
 P_pump = float(sys.argv[2])
-prompt = "P_pump=" + str(P_pump*1000) + "mW" + ",M=" + str(M)
+prompt = "P_pump=" + str(P_pump*1000) + "mW" + ",M=" + str(M) + ",FSR=" + str(FSR/1e9) + "GHz"
 print(prompt)
 
 #改变输出到文件
@@ -171,9 +172,9 @@ print("tau_prime = ", tau_prime)
 print("p_sat = ", p_sat)
 
 def next_g(g, g_0, signal_power, p_sat):
-    delta_g = tau_prime * (g_0 - (1 + signal_power / p_sat) * g)
     g_limit = g_0 / (1 + signal_power / p_sat)
     return g_limit
+    delta_g =  (g_0 - (1 + signal_power / p_sat) * g) * T_R / tau_prime
     if (delta_g == 0):
         return g
     if (delta_g > 0 and g + delta_g > g_limit):
@@ -183,9 +184,18 @@ def next_g(g, g_0, signal_power, p_sat):
     else:
         return g + delta_g
 
+def ASE(A_spectrum, g):
+    return A_spectrum
+    N_2 = (N + (2 * g) / (Gamma_s * sigma_sa * L_d)) / (1 + beta + sigma_se / sigma_sa)
+    alpha = N_2 * Gamma_s * sigma_se * 2 * h * FSR
+    ase_spectrum = np.array([np.sqrt(alpha * (nu_s + FSR * i) * L_d) for i in range(-512, 512)])
+    ase_spectrum_modified = ase_spectrum * np.array([np.exp(1.0j * random.random() * 2 * pi) for i in range(1024)])
+    A_spectrum += ase_spectrum_modified
+    return A_spectrum
+
 
 for _i in range(save_round2):
-    sys.stderr.write("process: %.2f%%, g = %f, pump_power = %f, signal_power = %f, p_sat = %f, l_p_tot = %f, l = %f           \r" % (_i/save_round2 * 100, g, pump_power, signal_power, p_sat, l_p_tot, l))
+    sys.stderr.write("process: %.2f%%, g = %f, pump_power = %f, signal_power = %f, p_sat = %f, l_p_tot = %f, l = %f      \r" % (_i/save_round2 * 100, g, pump_power, signal_power, p_sat, l_p_tot, l))
     for _j in range(scale):
         pump_power=np.sum(abs(E_p)**2)/T_R*delta_t
         signal_power=np.sum(abs(A)**2)/T_R*delta_t
@@ -206,11 +216,7 @@ for _i in range(save_round2):
             A_spectrum=A_spectrum*np.exp(dT*r)
             A=ifft(ifftshift(A_spectrum))
         g = next_g(g, g_0, signal_power, p_sat)
-        N_2 = (N + (2 * g) / (Gamma_s * sigma_sa * L_d)) / (1 + beta + sigma_se / sigma_sa)
-        alpha = N_2 * Gamma_s * sigma_se * 2 * h * FSR
-        ase_spectrum = np.array([np.sqrt(alpha * (nu_s + FSR * i) * L_d) for i in range(-512, 512)])
-        ase_spectrum_modified = ase_spectrum * np.array([np.exp(1.0j * random.random() * 2 * pi) for i in range(1024)])
-        A_spectrum += ase_spectrum_modified
+        A_spectrum = ASE(A_spectrum, g)
         A = ifft(ifftshift(A_spectrum))
         E_p=roundtrip_evolution_for_EO_comb(E_p,total_loss=l_p_tot)
     A_save.append(A)
@@ -323,8 +329,8 @@ print("signal光(功率)的总损耗: l'= "+str(2*pi*omega_s/Q_tots/omega_m))
 
 
 plt.figure("Gain",figsize=(14,7),dpi=100)
-plt.plot(T_G[::],g_save[::],color="red",label="Gain")
-plt.plot(T_G[::],[l for i in range(save_round2)],color="blue",label="Loss")
+plt.plot(T_G[1000::],g_save[1000::],color="red",label="Gain")
+plt.plot(T_G[1000::],[l for i in range(1000, save_round2)],color="blue",label="Loss")
 plt.legend()
 plt.xlabel("Roundtrip Time")
 plt.ylabel("Gain")
