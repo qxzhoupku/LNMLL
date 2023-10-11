@@ -171,10 +171,10 @@ print("g_0 = ", g_0)
 print("tau_prime = ", tau_prime)
 print("p_sat = ", p_sat)
 
-def next_g(g, g_0, signal_power, p_sat):
+def next_g(g, g_0, signal_power, p_sat, _tau_prime):
     g_limit = g_0 / (1 + signal_power / p_sat)
-    return g_limit
-    delta_g =  (g_0 - (1 + signal_power / p_sat) * g) * T_R / tau_prime
+    # return g_limit
+    delta_g =  (g_0 - (1 + signal_power / p_sat) * g) * T_R / _tau_prime
     if (delta_g == 0):
         return g
     if (delta_g > 0 and g + delta_g > g_limit):
@@ -185,7 +185,7 @@ def next_g(g, g_0, signal_power, p_sat):
         return g + delta_g
 
 def ASE(A_spectrum, g):
-    return A_spectrum
+    # return A_spectrum
     N_2 = (N + (2 * g) / (Gamma_s * sigma_sa * L_d)) / (1 + beta + sigma_se / sigma_sa)
     alpha = N_2 * Gamma_s * sigma_se * 2 * h * FSR
     ase_spectrum = np.array([np.sqrt(alpha * (nu_s + FSR * i) * L_d) for i in range(-512, 512)])
@@ -204,18 +204,16 @@ for _i in range(save_round2):
         p_sat = h * nu_s * A_s / (Gamma_s * tau_prime * (sigma_sa + sigma_se / (1 + beta)))
         g_0 = 0.5 * Gamma_s * L_d * sigma_se * N * tau_prime / (1 + beta) * ((1 - sigma_sa / sigma_se * beta * sigma_pe / sigma_pa) * sigma_pa * Gamma_p / h / nu_p / A_p * pump_power - sigma_sa / sigma_se / tau_g)
         # l_p_Er = np.exp(0.5 * Gamma_p * L_d * N * (beta * sigma_pe * sigma_sa - sigma_pa * sigma_se) / (sigma_se + sigma_sa * (1 + beta)) + (sigma_pe * beta + sigma_pa * (1 + beta)) / (sigma_se * beta + sigma_sa * (1 + beta))) * g
+        g = next_g(g, g_0, signal_power, p_sat, tau_prime)
         l_p_Er=np.exp(0.5*Gamma_p*L_d*N*sigma_pa*((1+beta+beta*sigma_pe/sigma_pa)*(pump_power/A_p/b_pa+(signal_power + rsignal_power)/A_s/b_sa)/(1+(1+beta)*pump_power/A_p/b_pa+beta*pump_power/A_p/b_pe+(1+beta+eta)*(signal_power + rsignal_power)/A_s/b_sa)-1))
         l_p_tot=l_p_in*l_p_Er
         for _k in range(steps): # k循环steps次，演化一个roundtrip time，因为dT=1/steps
             # LLE 演化
             A=A*np.exp((-l+1.0j*delta*abs(A**2)+1.0j*M*np.cos(x))*dT)
             A_spectrum=fftshift(fft(A))
-            signal_power=np.sum(abs(A)**2)/T_R*delta_t
-            rsignal_power = signal_power
             r=-1.0j*D*omega_m**2*q**2+g/(1+(omega_m/Omega_g*q)**2)
             A_spectrum=A_spectrum*np.exp(dT*r)
             A=ifft(ifftshift(A_spectrum))
-        g = next_g(g, g_0, signal_power, p_sat)
         A_spectrum = ASE(A_spectrum, g)
         A = ifft(ifftshift(A_spectrum))
         E_p=roundtrip_evolution_for_EO_comb(E_p,total_loss=l_p_tot)
