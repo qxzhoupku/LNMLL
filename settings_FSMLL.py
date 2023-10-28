@@ -20,5 +20,5 @@ plt.rcParams['agg.path.chunksize'] = 120
 
 c0=299792458
 h=6.62607015e-34 # 普朗克常量
-hbar=h/(2*pi) # 约化普朗克常量
+hbar=h/(2*np.pi) # 约化普朗克常量
 k_B=1.380649e-23 # 玻尔兹曼常量

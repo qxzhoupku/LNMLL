@@ -56,6 +56,7 @@ k=omega_p/omega_m/Q_exp*2*np.pi # 电光梳在波导和谐振腔耦合处的耦�
 M = float(sys.argv[1])
 phi_opt=0.0 # pump光的失谐
 t=np.linspace(-T_R/2,T_R/2-T_R/1023,1024)
+delta_t = t[-1]-t[-2]
 q=np.linspace(-512,511,1024)
 x=np.linspace(-np.pi,np.pi-np.pi*2/1023,1024)
 total_loss=omega_p/omega_m/Q_totp*2*np.pi
@@ -151,7 +152,7 @@ A_save=[]
 g_save=[]
 E_p_save=[]
 E_p=E_0p
-delta_t = t[-1]-t[-2]
+
 
 # # ! 先不考虑Kerr效应，演化save round个结果
 # for _i in range(save_round1):
@@ -240,6 +241,14 @@ T=np.array(range(begin_to_save,int(save_round2)))*scale
 T_G=np.array(range(int(save_round2)))*scale
 x,y=np.meshgrid(T,t)
 
+
+np.save(prompt + "_A_save.npy", A_save)
+np.save(prompt + "_E_p_save.npy", E_p_save)
+np.save(prompt + "_g_save.npy", g_save)
+
+exit(0)
+
+# 以下是绘图部分
 
 time_domain_p=[]
 for i in range(-1-1024*4,-1):
@@ -370,9 +379,4 @@ plt.close()
 # # plt.show()
 # plt.cla()
 # plt.close()
-
-
-np.save("./1A_save.npy",A_save)
-np.save("./1E_p_save.npy",E_p_save)
-np.save("./1g_save.npy",g_save)
 
