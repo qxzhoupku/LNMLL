@@ -247,9 +247,9 @@ T_G=np.array(range(int(save_round2)))*scale
 x,y=np.meshgrid(T,t)
 
 
-np.save(prompt + "_A_save.npy", A_save)
-np.save(prompt + "_E_p_save.npy", E_p_save)
-np.save(prompt + "_g_save.npy", g_save)
+# np.save(prompt + "_A_save.npy", A_save)
+# np.save(prompt + "_E_p_save.npy", E_p_save)
+# np.save(prompt + "_g_save.npy", g_save)
 
 
 # 以下是绘图部分
@@ -351,8 +351,8 @@ def plot():
 
 
     plt.figure("Gain",figsize=(14,7),dpi=100)
-    plt.plot(T_G[1000::],g_save[1000::],color="red",label="Gain")
-    plt.plot(T_G[1000::],[l for i in range(1000, save_round2)],color="blue",label="Loss")
+    plt.plot(T_G[::],g_save[::],color="red",label="Gain")
+    plt.plot(T_G[::],[l for i in range(0, save_round2)],color="blue",label="Loss")
     plt.legend()
     plt.xlabel("Roundtrip Time")
     plt.ylabel("Gain")
@@ -386,4 +386,4 @@ def plot():
     # plt.close()
 
 
-# plot()
+plot()

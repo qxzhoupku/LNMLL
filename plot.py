@@ -187,8 +187,8 @@ print("signal光(功率)的总损耗: l'= "+str(2*np.pi*omega_s/Q_tots/omega_m))
 
 
 plt.figure("Gain",figsize=(14,7),dpi=100)
-plt.plot(T_G[1000::],g_save[1000::],color="red",label="Gain")
-plt.plot(T_G[1000::],[l for i in range(1000, save_round2)],color="blue",label="Loss")
+plt.plot(T_G[::],g_save[::],color="red",label="Gain")
+plt.plot(T_G[::],[l for i in range(0, save_round2)],color="blue",label="Loss")
 plt.legend()
 plt.xlabel("Roundtrip Time")
 plt.ylabel("Gain")
