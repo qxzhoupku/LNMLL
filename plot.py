@@ -87,7 +87,9 @@ begin_to_save=00000
 A_save = np.load(prompt + "_A_save.npy")
 E_p_save = np.load(prompt + "_E_p_save.npy")
 g_save = np.load(prompt + "_g_save.npy")
-
+T=np.array(range(begin_to_save,int(save_round2)))*scale
+T_G=np.array(range(int(save_round2)))*scale
+x,y=np.meshgrid(T,t)
 
 time_domain_p=[]
 for i in range(-1-1024*4,-1):

@@ -251,137 +251,139 @@ np.save(prompt + "_A_save.npy", A_save)
 np.save(prompt + "_E_p_save.npy", E_p_save)
 np.save(prompt + "_g_save.npy", g_save)
 
-exit(0)
 
 # 以下是绘图部分
 
-time_domain_p=[]
-for i in range(-1-1024*4,-1):
-    time_domain_p+=list(E_p_save[:,i])
-time_domain_p=np.array(time_domain_p)*np.sqrt(2*np.pi*omega_p/Q_exp/omega_m)*1.0j+np.sqrt(1-2*np.pi*omega_p/Q_exp/omega_m)*np.sqrt(P_pump)
-spectrum_p=fftshift(fft(time_domain_p*delta_t))
-spectrum_p_log=10*np.log10(np.abs(spectrum_p/T_R/(len(time_domain_p)/1024))**2/1e-3)
-freq_list_p=np.linspace(c0/lambda_p-512*FSR,c0/lambda_p+512*FSR,len(time_domain_p))
-lamb_list_p=c0/freq_list_p
+def plot():
+    time_domain_p=[]
+    for i in range(-1-1024*4,-1):
+        time_domain_p+=list(E_p_save[:,i])
+    time_domain_p=np.array(time_domain_p)*np.sqrt(2*np.pi*omega_p/Q_exp/omega_m)*1.0j+np.sqrt(1-2*np.pi*omega_p/Q_exp/omega_m)*np.sqrt(P_pump)
+    spectrum_p=fftshift(fft(time_domain_p*delta_t))
+    spectrum_p_log=10*np.log10(np.abs(spectrum_p/T_R/(len(time_domain_p)/1024))**2/1e-3)
+    freq_list_p=np.linspace(c0/lambda_p-512*FSR,c0/lambda_p+512*FSR,len(time_domain_p))
+    lamb_list_p=c0/freq_list_p
 
 
-t_center_p=len(time_domain_p)//2
-t_range_p=len(time_domain_p)//4096
-plt.figure("Output EO comb pulse train",figsize=(9,3),dpi=100)
-plt.plot((np.array(range(len(time_domain_p)))*T_R*1e9/1024)[t_center_p-t_range_p:t_center_p+t_range_p],(1e3*np.abs(time_domain_p)**2)[t_center_p-t_range_p:t_center_p+t_range_p],color="red")
-plt.xlabel("time (ns)")
-plt.ylabel("power (mW)")
-plt.savefig(prompt + "_pump" + ".png",dpi=300,bbox_inches="tight",transparent=True)
-# plt.show()
+    t_center_p=len(time_domain_p)//2
+    t_range_p=len(time_domain_p)//4096
+    plt.figure("Output EO comb pulse train",figsize=(9,3),dpi=100)
+    plt.plot((np.array(range(len(time_domain_p)))*T_R*1e9/1024)[t_center_p-t_range_p:t_center_p+t_range_p],(1e3*np.abs(time_domain_p)**2)[t_center_p-t_range_p:t_center_p+t_range_p],color="red")
+    plt.xlabel("time (ns)")
+    plt.ylabel("power (mW)")
+    plt.savefig(prompt + "_pump" + ".png",dpi=300,bbox_inches="tight",transparent=True)
+    # plt.show()
 
 
-k_center_p=len(spectrum_p)//2
-k_range_p=len(spectrum_p)//10
-plt.figure("Spectrum of pump",figsize=(9,3),dpi=100)
-plt.plot(1e9*lamb_list_p[k_center_p-k_range_p:k_center_p+k_range_p],spectrum_p_log[k_center_p-k_range_p:k_center_p+k_range_p],color="blue")
-plt.xlabel("Wavelength (nm)")
-plt.ylabel("Power (dBm)")
-plt.savefig(prompt + "_pump_spectrum" + ".png",dpi=300,bbox_inches="tight",transparent=True)
-# plt.show()
-print("max spectrum_p_log =", max(spectrum_p_log))
+    k_center_p=len(spectrum_p)//2
+    k_range_p=len(spectrum_p)//10
+    plt.figure("Spectrum of pump",figsize=(9,3),dpi=100)
+    plt.plot(1e9*lamb_list_p[k_center_p-k_range_p:k_center_p+k_range_p],spectrum_p_log[k_center_p-k_range_p:k_center_p+k_range_p],color="blue")
+    plt.xlabel("Wavelength (nm)")
+    plt.ylabel("Power (dBm)")
+    plt.savefig(prompt + "_pump_spectrum" + ".png",dpi=300,bbox_inches="tight",transparent=True)
+    # plt.show()
+    print("max spectrum_p_log =", max(spectrum_p_log))
 
 
-time_domain=[]
-for i in range(-1-1024*8,-1):
-    time_domain+=list(A_save[:,i])
-time_domain=np.array(time_domain)*np.sqrt(2*np.pi*omega_s/Q_tots/omega_m)
-spectrum=fftshift(fft(time_domain*delta_t))
-spectrum_log=10*np.log10(np.abs(spectrum/T_R/(len(time_domain)/1024))**2/1e-3)
-freq_list=np.linspace(c0/lambda_s-512*FSR,c0/lambda_s+512*FSR,len(time_domain))
-lamb_list=c0/freq_list
+    time_domain=[]
+    for i in range(-1-1024*8,-1):
+        time_domain+=list(A_save[:,i])
+    time_domain=np.array(time_domain)*np.sqrt(2*np.pi*omega_s/Q_tots/omega_m)
+    spectrum=fftshift(fft(time_domain*delta_t))
+    spectrum_log=10*np.log10(np.abs(spectrum/T_R/(len(time_domain)/1024))**2/1e-3)
+    freq_list=np.linspace(c0/lambda_s-512*FSR,c0/lambda_s+512*FSR,len(time_domain))
+    lamb_list=c0/freq_list
 
 
-t_center=len(time_domain)//2
-t_range=len(time_domain)//2048
-plt.figure("Pulse Train of signal",figsize=(9,3),dpi=100)
-plt.plot((np.array(range(len(time_domain)))*T_R*1e9/1024)[t_center-t_range:t_center+t_range],(1e3*np.abs(time_domain)**2)[t_center-t_range:t_center+t_range],color="red")
-plt.xlabel("time (ns)")
-plt.ylabel("power (mW)")
-plt.savefig(prompt + "_signal" + ".png",dpi=300,bbox_inches="tight",transparent=True)
-# plt.show()
+    t_center=len(time_domain)//2
+    t_range=len(time_domain)//2048
+    plt.figure("Pulse Train of signal",figsize=(9,3),dpi=100)
+    plt.plot((np.array(range(len(time_domain)))*T_R*1e9/1024)[t_center-t_range:t_center+t_range],(1e3*np.abs(time_domain)**2)[t_center-t_range:t_center+t_range],color="red")
+    plt.xlabel("time (ns)")
+    plt.ylabel("power (mW)")
+    plt.savefig(prompt + "_signal" + ".png",dpi=300,bbox_inches="tight",transparent=True)
+    # plt.show()
 
 
-k_center=len(spectrum)//2
-k_range=len(spectrum)//4
+    k_center=len(spectrum)//2
+    k_range=len(spectrum)//4
 
-plt.figure("Spectrum of signal",figsize=(9,3),dpi=100)
-plt.plot(1e9*lamb_list[k_center-k_range:k_center+k_range],spectrum_log[k_center-k_range:k_center+k_range],color="blue")
-plt.xlabel("Wavelength (nm)")
-plt.ylabel("Power (dBm)")
-plt.savefig(prompt + "_signal_spectrum" + ".png",dpi=600,bbox_inches="tight",transparent=True)
-# plt.show()
-print(max(spectrum_log))
-
-
-signal_average_power=np.sum(abs(A_save[:,-1])**2)/T_R*delta_t
-EO_comb_average_power=np.sum(abs(E_p_save[:,-1])**2)/T_R*delta_t
-# print(signal_average_power)
-# print(EO_comb_average_power)
-print("EO comb peak power = "+str(np.max(abs(E_p_save[:,-1])**2)*1e3)+" mW")
-print("EO comb average power = "+str(EO_comb_average_power*1e3)+" mW")
+    plt.figure("Spectrum of signal",figsize=(9,3),dpi=100)
+    plt.plot(1e9*lamb_list[k_center-k_range:k_center+k_range],spectrum_log[k_center-k_range:k_center+k_range],color="blue")
+    plt.xlabel("Wavelength (nm)")
+    plt.ylabel("Power (dBm)")
+    plt.savefig(prompt + "_signal_spectrum" + ".png",dpi=600,bbox_inches="tight",transparent=True)
+    # plt.show()
+    print(max(spectrum_log))
 
 
-print("从腔内输出的signal pulse: ")
-
-print("时域上单个pulse峰值功率(mW): ",end="")
-print(np.max(np.abs(time_domain)**2)*1e3)
-print("时域上单个pulse平均能量(J): ",end="")
-print(np.sum(np.abs(time_domain)**2)*delta_t/(len(time_domain)/1024))
-print("时域上单个pulse平均功率(mW): ",end="")
-print(np.sum(np.abs(time_domain)**2)*delta_t/(len(time_domain)/1024)/T_R*1e3)
-# print("频域上单个pulse平均能量(J): ",end="")
-# print(np.sum(np.abs(spectrum)**2)*(freq_list[-1]-freq_list[-2])/(len(time_domain)/1024))
-print("相对于泵浦光的转换效率(%): ",end="")
-print(np.sum(np.abs(time_domain)**2)*delta_t/(len(time_domain)/1024)/T_R/P_pump*1e2)
+    signal_average_power=np.sum(abs(A_save[:,-1])**2)/T_R*delta_t
+    EO_comb_average_power=np.sum(abs(E_p_save[:,-1])**2)/T_R*delta_t
+    # print(signal_average_power)
+    # print(EO_comb_average_power)
+    print("EO comb peak power = "+str(np.max(abs(E_p_save[:,-1])**2)*1e3)+" mW")
+    print("EO comb average power = "+str(EO_comb_average_power*1e3)+" mW")
 
 
+    print("从腔内输出的signal pulse: ")
 
-# 本次运行的相关信息
-print("pump光(功率)的耦合损耗: k= "+str(k))
-print("pump光(功率)的本征损耗: α= "+str(2*np.pi*omega_p/Q_inp/omega_m))
-print("pump光(功率)的总损耗: l= "+str(total_loss))
-print("signal光(功率)的耦合损耗: k'= "+str(2*np.pi*omega_s/Q_exs/omega_m))
-print("signal光(功率)的本征损耗: α'= "+str(2*np.pi*omega_s/Q_ins/omega_m))
-print("signal光(功率)的总损耗: l'= "+str(2*np.pi*omega_s/Q_tots/omega_m))
-
-
-plt.figure("Gain",figsize=(14,7),dpi=100)
-plt.plot(T_G[1000::],g_save[1000::],color="red",label="Gain")
-plt.plot(T_G[1000::],[l for i in range(1000, save_round2)],color="blue",label="Loss")
-plt.legend()
-plt.xlabel("Roundtrip Time")
-plt.ylabel("Gain")
-# plt.show()
-plt.savefig(prompt + "_gain" + ".png",dpi=300,bbox_inches="tight",transparent=True)
-plt.cla()
-plt.close()
+    print("时域上单个pulse峰值功率(mW): ",end="")
+    print(np.max(np.abs(time_domain)**2)*1e3)
+    print("时域上单个pulse平均能量(J): ",end="")
+    print(np.sum(np.abs(time_domain)**2)*delta_t/(len(time_domain)/1024))
+    print("时域上单个pulse平均功率(mW): ",end="")
+    print(np.sum(np.abs(time_domain)**2)*delta_t/(len(time_domain)/1024)/T_R*1e3)
+    # print("频域上单个pulse平均能量(J): ",end="")
+    # print(np.sum(np.abs(spectrum)**2)*(freq_list[-1]-freq_list[-2])/(len(time_domain)/1024))
+    print("相对于泵浦光的转换效率(%): ",end="")
+    print(np.sum(np.abs(time_domain)**2)*delta_t/(len(time_domain)/1024)/T_R/P_pump*1e2)
 
 
-# plt.figure("Time Evolution",figsize=(10,4),dpi=100)
-# plt.contourf(x,y*1e12,1000*np.abs(A_save)**2,100,cmap=cm.jet)
-# plt.xlabel("Roundtrip")
-# plt.ylabel("t (ps)")
-# plt.title("Intra-cavity signal Evolution (mW)")
-# plt.colorbar()
-# plt.savefig(prompt + "_signal_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
-# # plt.show()
-# plt.cla()
-# plt.close()
+
+    # 本次运行的相关信息
+    print("pump光(功率)的耦合损耗: k= "+str(k))
+    print("pump光(功率)的本征损耗: α= "+str(2*np.pi*omega_p/Q_inp/omega_m))
+    print("pump光(功率)的总损耗: l= "+str(total_loss))
+    print("signal光(功率)的耦合损耗: k'= "+str(2*np.pi*omega_s/Q_exs/omega_m))
+    print("signal光(功率)的本征损耗: α'= "+str(2*np.pi*omega_s/Q_ins/omega_m))
+    print("signal光(功率)的总损耗: l'= "+str(2*np.pi*omega_s/Q_tots/omega_m))
 
 
-# plt.figure("Time Evolution2",figsize=(10,4),dpi=100)
-# plt.contourf(x,y*1e12,1000*np.abs(E_p_save)**2,100,cmap=cm.jet)
-# plt.xlabel("Roundtrip")
-# plt.ylabel("t (ps)")
-# plt.title("Intra-cavity pump Evolution (mW)")
-# plt.colorbar()
-# plt.savefig(prompt + "_pump_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
-# # plt.show()
-# plt.cla()
-# plt.close()
+    plt.figure("Gain",figsize=(14,7),dpi=100)
+    plt.plot(T_G[1000::],g_save[1000::],color="red",label="Gain")
+    plt.plot(T_G[1000::],[l for i in range(1000, save_round2)],color="blue",label="Loss")
+    plt.legend()
+    plt.xlabel("Roundtrip Time")
+    plt.ylabel("Gain")
+    # plt.show()
+    plt.savefig(prompt + "_gain" + ".png",dpi=300,bbox_inches="tight",transparent=True)
+    plt.cla()
+    plt.close()
 
+
+    # plt.figure("Time Evolution",figsize=(10,4),dpi=100)
+    # plt.contourf(x,y*1e12,1000*np.abs(A_save)**2,100,cmap=cm.jet)
+    # plt.xlabel("Roundtrip")
+    # plt.ylabel("t (ps)")
+    # plt.title("Intra-cavity signal Evolution (mW)")
+    # plt.colorbar()
+    # plt.savefig(prompt + "_signal_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
+    # # plt.show()
+    # plt.cla()
+    # plt.close()
+
+
+    # plt.figure("Time Evolution2",figsize=(10,4),dpi=100)
+    # plt.contourf(x,y*1e12,1000*np.abs(E_p_save)**2,100,cmap=cm.jet)
+    # plt.xlabel("Roundtrip")
+    # plt.ylabel("t (ps)")
+    # plt.title("Intra-cavity pump Evolution (mW)")
+    # plt.colorbar()
+    # plt.savefig(prompt + "_pump_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
+    # # plt.show()
+    # plt.cla()
+    # plt.close()
+
+
+# plot()
