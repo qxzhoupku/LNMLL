@@ -77,7 +77,7 @@ print(prompt)
 
 # 时间normalize到T_R
 scale=1 # 每保存一次运行scale个roundtrip time
-steps = 10
+steps = 100
 dT = 1/steps
 save_round1=25000 # 一共保存save_round个中间结果
 save_round2=300000
