@@ -1,5 +1,8 @@
 from settings_FSMLL import *
 
+if (len(sys.argv) < 5):
+    print("Usage: python simulation.py M P_pump FSR dirname [debug]")
+    exit(1)
 
 #! Lasing parameters of Erbium
 N=3.959e26 # Er离子浓度: m^-3
@@ -60,6 +63,17 @@ l=-0.5*np.log(1-2*np.pi*omega_s/Q_tots/omega_m) # Haus方程中的loss,包含sig
 l_p_in=np.exp(-2*np.pi*omega_p/omega_m/Q_inp/2)
 P_pump = float(sys.argv[2])
 prompt = "P_pump=" + str(P_pump*1000) + "mW" + ",M=" + str(M) + ",FSR=" + str(FSR/1e9) + "GHz"
+
+
+# 切换到文件所在目录
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+# 改变输出位置
+os.chdir("../outputs")
+directory_name = sys.argv[4]
+os.chdir(directory_name)
+sys.stdout = open(prompt + ".txt", 'a')
+print(prompt)
 
 # 时间normalize到T_R
 scale=1 # 每保存一次运行scale个roundtrip time

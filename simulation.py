@@ -1,9 +1,9 @@
 from settings_FSMLL import *
 
-if (len(sys.argv) < 4):
-    print("Usage: python simulation.py M P_pump FSR [debug]")
+if (len(sys.argv) < 5):
+    print("Usage: python simulation.py M P_pump FSR dirname [debug]")
     exit(1)
-if (len(sys.argv) == 5 and sys.argv[3] == "debug"):
+if (len(sys.argv) == 6 and sys.argv[5] == "debug"):
     sys.stderr = open("errout.txt", "w")
 
 
@@ -68,9 +68,14 @@ P_pump = float(sys.argv[2])
 prompt = "P_pump=" + str(P_pump*1000) + "mW" + ",M=" + str(M) + ",FSR=" + str(FSR/1e9) + "GHz"
 print("prompt:", prompt)
 
-#改变输出到文件
+
+
+# 切换到文件所在目录
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+# 改变输出到输出文件
 os.chdir("../outputs")
-directory_name = time.strftime("%Y%m%d:%H%M:%S", time.localtime())
+directory_name = sys.argv[4]
 os.mkdir(directory_name)
 os.chdir(directory_name)
 sys.stdout = open(prompt + ".txt",'w')
