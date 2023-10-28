@@ -83,10 +83,10 @@ sys.stdout = open(prompt + ".txt",'w')
 
 # 时间normalize到T_R
 scale=1 # 每保存一次运行scale个roundtrip time
-steps = 100
+steps = 10
 dT = 1/steps
 save_round1=25000 # 一共保存save_round个中间结果
-save_round2=50000
+save_round2=500000
 begin_to_save=00000
 
 
@@ -362,7 +362,7 @@ plt.cla()
 plt.close()
 
 
-# np.save("./1A_save.npy",A_save)
-# np.save("./1E_p_save.npy",E_p_save)
-# np.save("./1g_save.npy",g_save)
+np.save("./1A_save.npy",A_save)
+np.save("./1E_p_save.npy",E_p_save)
+np.save("./1g_save.npy",g_save)
 
