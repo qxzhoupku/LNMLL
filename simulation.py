@@ -69,7 +69,7 @@ print("prompt:", prompt)
 
 #改变输出到文件
 os.chdir("../outputs")
-directory_name = time.strftime("%Y%m%d/%H%M", time.localtime())
+directory_name = time.strftime("%Y%m%d:%H%M:%S", time.localtime())
 os.mkdir(directory_name)
 os.chdir(directory_name)
 sys.stdout = open(prompt + ".txt",'w')
@@ -77,13 +77,14 @@ print(prompt)
 
 # 时间normalize到T_R
 scale=1 # 每保存一次运行scale个roundtrip time
-steps = 100
+steps = 10
 dT = 1/steps
 save_round1=25000 # 一共保存save_round个中间结果
 save_round2=500000
 begin_to_save=00000
 
 # # 记录此时所有的变量
+print("steps = " + str(steps))
 # print("N = " + str(N))
 # print("sigma_sa = " + str(sigma_sa))
 # print("sigma_se = " + str(sigma_se))
