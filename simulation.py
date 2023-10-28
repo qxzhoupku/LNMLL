@@ -80,11 +80,12 @@ scale=1 # 每保存一次运行scale个roundtrip time
 steps = 10
 dT = 1/steps
 save_round1=25000 # 一共保存save_round个中间结果
-save_round2=500000
+save_round2=300000
 begin_to_save=00000
 
 # # 记录此时所有的变量
 print("steps = " + str(steps))
+print("save_round2 = " + str(save_round2))
 # print("N = " + str(N))
 # print("sigma_sa = " + str(sigma_sa))
 # print("sigma_se = " + str(sigma_se))
@@ -347,28 +348,28 @@ plt.cla()
 plt.close()
 
 
-plt.figure("Time Evolution",figsize=(10,4),dpi=100)
-plt.contourf(x,y*1e12,1000*np.abs(A_save)**2,100,cmap=cm.jet)
-plt.xlabel("Roundtrip")
-plt.ylabel("t (ps)")
-plt.title("Intra-cavity signal Evolution (mW)")
-plt.colorbar()
-plt.savefig(prompt + "_signal_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
-# plt.show()
-plt.cla()
-plt.close()
+# plt.figure("Time Evolution",figsize=(10,4),dpi=100)
+# plt.contourf(x,y*1e12,1000*np.abs(A_save)**2,100,cmap=cm.jet)
+# plt.xlabel("Roundtrip")
+# plt.ylabel("t (ps)")
+# plt.title("Intra-cavity signal Evolution (mW)")
+# plt.colorbar()
+# plt.savefig(prompt + "_signal_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
+# # plt.show()
+# plt.cla()
+# plt.close()
 
 
-plt.figure("Time Evolution2",figsize=(10,4),dpi=100)
-plt.contourf(x,y*1e12,1000*np.abs(E_p_save)**2,100,cmap=cm.jet)
-plt.xlabel("Roundtrip")
-plt.ylabel("t (ps)")
-plt.title("Intra-cavity pump Evolution (mW)")
-plt.colorbar()
-plt.savefig(prompt + "_pump_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
-# plt.show()
-plt.cla()
-plt.close()
+# plt.figure("Time Evolution2",figsize=(10,4),dpi=100)
+# plt.contourf(x,y*1e12,1000*np.abs(E_p_save)**2,100,cmap=cm.jet)
+# plt.xlabel("Roundtrip")
+# plt.ylabel("t (ps)")
+# plt.title("Intra-cavity pump Evolution (mW)")
+# plt.colorbar()
+# plt.savefig(prompt + "_pump_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
+# # plt.show()
+# plt.cla()
+# plt.close()
 
 
 np.save("./1A_save.npy",A_save)

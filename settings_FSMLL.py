@@ -19,7 +19,6 @@ plt.rcParams['font.size'] = 14  #设置字体大小，全局有效
 plt.rcParams['agg.path.chunksize'] = 120
 
 c0=299792458
-pi=3.14159265359 # 圆周率
 h=6.62607015e-34 # 普朗克常量
 hbar=h/(2*pi) # 约化普朗克常量
 k_B=1.380649e-23 # 玻尔兹曼常量

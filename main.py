@@ -1,10 +1,11 @@
 import os
 import sys
 import multiprocessing as mp
+import time
 
-list_M = [0.2, 0.4]
-list_P_pump = [20e-3, 200e-3]
-list_FSR = [25e9, 10e9]
+list_M = [0.2, 0.4, 0.6, 0.8]
+list_P_pump = [20e-3]
+list_FSR = [25e9]
 
 pool = []
 for M in list_M:
@@ -15,6 +16,7 @@ for M in list_M:
 if __name__ == "__main__":
     for p in pool:
         p.start()
+        time.sleep(2)
 
     for p in pool:
         p.join()
