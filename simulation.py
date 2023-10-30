@@ -7,7 +7,7 @@ if (len(sys.argv) == 6 and sys.argv[5] == "debug"):
     sys.stderr = open("errout.txt", "w")
 
 
-#! Lasing parameters of Erbium
+# Lasing parameters of Erbium
 N=3.959e26 # Er离子浓度: m^-3
 sigma_sa=4.03e-25 # signal的吸收截面: m^2
 sigma_se=6.76e-25 # signal的发射截面: m^2
