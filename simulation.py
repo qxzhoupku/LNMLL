@@ -166,7 +166,7 @@ g_save = []
 E_p_save = []
 E_0p=1.0j*total_loss*np.sqrt(k)/(1.0-total_loss*np.sqrt(1-k)*np.exp(-1.0j*phi_opt))*np.sqrt(P_pump)*np.exp(-1.0j*phi_opt)*np.exp(-1.0j * omega_p * t) # 初始的pump光场：未加电光调制，腔内为CW场，泵浦与耗散相平衡
 A_0 = np.array([random.random() * np.exp(1.0j*random.random()*2*np.pi) for i in range(1024)])*1e-3 # 初始signal光场为噪声
-pump_power, signal_power, rsignal_power, tau_prime, p_sat, g_0, l_p_tot = parameter_calculation(E_p, A, g)
+pump_power, signal_power, rsignal_power, tau_prime, p_sat, g_0, l_p_tot = parameter_calculation(E_0p, A_0, 0)
 ase_power = 0
 print("total_loss = " + str(total_loss))
 print("g_0 = ", g_0)
@@ -176,7 +176,7 @@ print("p_sat = ", p_sat)
 E_p = E_0p
 A = A_0
 g = g_0
-# g = l_s
+g = 0
 
 """main loop begin"""
 for _i in range(save_round):
