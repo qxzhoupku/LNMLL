@@ -9,11 +9,15 @@ if __name__ == "__main__":
     # 切换到文件所在目录
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    list_M = [0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0]
-    list_P_pump = [20e-3, 200e-3]
-    list_FSR = [25e9, 10e9]
+    # list_M = [0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0]
+    # list_P_pump = [20e-3, 200e-3]
+    # list_FSR = [25e9, 10e9]
 
-    list_M = [0.6, 0.8]
+    # list_M = [0.0, 0.2, 0.3, 0.8]
+    # list_P_pump = [20e-3, 200e-3]
+    # list_FSR = [25e9]
+
+    list_M = [0.1]
     list_P_pump = [20e-3]
     list_FSR = [25e9]
 
@@ -41,7 +45,7 @@ if __name__ == "__main__":
                 print(f"{len(pool_simulation)}/{nums} constructed, " + command)
 
     length = len(pool_simulation)
-    parallel = 1
+    parallel = 4
     for i in range(0, length, parallel):
         for j in range(parallel):
             if i+j >= length:

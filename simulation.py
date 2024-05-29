@@ -83,7 +83,7 @@ print(prompt)
 
 # 时间normalize到T_R
 scale=1 # 每保存一次运行scale个roundtrip time
-steps = 100
+steps = 1
 dT = 1/steps
 save_round1=25000 # 一共保存save_round个中间结果
 save_round2=300000
@@ -208,11 +208,15 @@ def ASE(A_spectrum, g):
     ase_spectrum = np.array([np.sqrt(alpha * (nu_s + FSR * i) * L_d) for i in range(-512, 512)])
     ase_spectrum_modified = ase_spectrum * np.array([np.exp(1.0j * random.random() * 2 * np.pi) for i in range(1024)])
     A_spectrum += ase_spectrum_modified
-    return A_spectrum
+    ase = ifft(ifftshift(ase_spectrum_modified))
+    ase_power = np.sum(abs(ase)**2) * delta_t / T_R
+    # sys.stderr.write(str(ase_power))
+    return A_spectrum, ase_power
 
+ase_power = 0
 
 for _i in range(save_round2):
-    sys.stderr.write("process: %.2f%%, g = %f, pump_power = %f, signal_power = %f, p_sat = %f, l_p_tot = %f, l = %f      \r" % (_i/save_round2 * 100, g, pump_power, signal_power, p_sat, l_p_tot, l))
+    sys.stderr.write("process: %.2f%%, g = %f, pump_power = %f, signal_power = %f, p_sat = %f, l_p_tot = %f, l = %f, ase_power = %f(nW)      \r" % (_i/save_round2 * 100, g, pump_power, signal_power, p_sat, l_p_tot, l, ase_power * 1e9))
     for _j in range(scale):
         pump_power=np.sum(abs(E_p)**2) * delta_t / T_R
         signal_power=np.sum(abs(A)**2) * delta_t / T_R
@@ -231,7 +235,7 @@ for _i in range(save_round2):
             r=-1.0j*D*omega_m**2*q**2+g/(1+(omega_m/Omega_g*q)**2)
             A_spectrum=A_spectrum*np.exp(dT*r)
             A=ifft(ifftshift(A_spectrum))
-        A_spectrum = ASE(A_spectrum, g)
+        A_spectrum, ase_power = ASE(A_spectrum, g)
         A = ifft(ifftshift(A_spectrum))
         E_p=roundtrip_evolution_for_EO_comb(E_p,total_loss=l_p_tot)
     A_save.append(A)
@@ -363,28 +367,28 @@ def plot():
     plt.close()
 
 
-    # plt.figure("Time Evolution",figsize=(10,4),dpi=100)
-    # plt.contourf(x,y*1e12,1000*np.abs(A_save)**2,100,cmap=cm.jet)
-    # plt.xlabel("Roundtrip")
-    # plt.ylabel("t (ps)")
-    # plt.title("Intra-cavity signal Evolution (mW)")
-    # plt.colorbar()
-    # plt.savefig(prompt + "_signal_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
-    # # plt.show()
-    # plt.cla()
-    # plt.close()
+    plt.figure("Time Evolution",figsize=(10,4),dpi=100)
+    plt.contourf(x,y*1e12,1000*np.abs(A_save)**2,100,cmap=cm.jet)
+    plt.xlabel("Roundtrip")
+    plt.ylabel("t (ps)")
+    plt.title("Intra-cavity signal Evolution (mW)")
+    plt.colorbar()
+    plt.savefig(prompt + "_signal_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
+    # plt.show()
+    plt.cla()
+    plt.close()
 
 
-    # plt.figure("Time Evolution2",figsize=(10,4),dpi=100)
-    # plt.contourf(x,y*1e12,1000*np.abs(E_p_save)**2,100,cmap=cm.jet)
-    # plt.xlabel("Roundtrip")
-    # plt.ylabel("t (ps)")
-    # plt.title("Intra-cavity pump Evolution (mW)")
-    # plt.colorbar()
-    # plt.savefig(prompt + "_pump_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
-    # # plt.show()
-    # plt.cla()
-    # plt.close()
+    plt.figure("Time Evolution2",figsize=(10,4),dpi=100)
+    plt.contourf(x,y*1e12,1000*np.abs(E_p_save)**2,100,cmap=cm.jet)
+    plt.xlabel("Roundtrip")
+    plt.ylabel("t (ps)")
+    plt.title("Intra-cavity pump Evolution (mW)")
+    plt.colorbar()
+    plt.savefig(prompt + "_pump_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
+    # plt.show()
+    plt.cla()
+    plt.close()
 
 
 plot()
