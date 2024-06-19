@@ -78,6 +78,7 @@ scale = 1 # 每保存一次运行scale个roundtrip time
 steps = 1
 eta = 1 / steps
 save_round = 300000
+plot_round = save_round // 6
 begin_to_save = 0
 
 
@@ -188,21 +189,17 @@ for _i in range(save_round):
         A_spectrum, ase_power = ASE(A_spectrum, g)
         A = ifft(ifftshift(A_spectrum))
         E_p = roundtrip_evolution_for_EO_comb(E_p, total_loss = l_p_tot)
-    data_save(A_save, g_save, E_p_save, A, g, E_p)
+    if _i >= save_round - plot_round:
+        data_save(A_save, g_save, E_p_save, A, g, E_p)
 """main loop end"""
 
 
-length = len(A_save)
-plot_round = length // 6
-A_save = A_save[length - plot_round: length]
-g_save = g_save[length - plot_round: length]
-E_p_save = E_p_save[length - plot_round: length]
 A_save = np.array(A_save).T
 g_save = np.array(g_save)
 E_p_save = np.array(E_p_save).T
-T = np.array(range(length - plot_round, length)) * scale
+T = np.array(range(save_round - plot_round, save_round)) * scale
 # T=np.array(range(begin_to_save,int(save_round)))*scale
-T_G = np.array(range(length - plot_round, length)) * scale
+T_G = np.array(range(save_round - plot_round, save_round)) * scale
 # T_G=np.array(range(int(save_round)))*scale
 x,y=np.meshgrid(T,t)
 
@@ -299,7 +296,7 @@ def plot():
 
     plt.figure("Gain",figsize=(14,7),dpi=100)
     plt.plot(T_G[::],g_save[::],color="red",label="Gain")
-    plt.plot(T_G[::],[l_s for i in range(0, save_round)],color="blue",label="Loss")
+    # plt.plot(T_G[::],[l_s for i in range(0, save_round)],color="blue",label="Loss")
     plt.legend()
     plt.xlabel("Roundtrip Time")
     plt.ylabel("Gain")
