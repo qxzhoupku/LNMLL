@@ -48,11 +48,11 @@ Q_totp = 0.2e6
 gamma = 0 # 电光梳在波导和谐振腔耦合处的损耗
 k = omega_p/omega_m/Q_exp*2*np.pi # 电光梳在波导和谐振腔耦合处的耦合效率
 M = float(sys.argv[1])
-phi_opt=0.0 # pump光的失谐
-t=np.linspace(-T_R/2,T_R/2-T_R/1023,1024)
-delta_t = t[-1]-t[-2]
-q=np.linspace(-512,511,1024)
-x=np.linspace(-np.pi,np.pi-np.pi*2/1023,1024)
+phi_opt = 0.0 # pump光的失谐
+t = np.linspace(-T_R/2,T_R/2-T_R/1023,1024)
+delta_t = t[-1] - t[-2]
+q = np.linspace(-512,511,1024)
+x = np.linspace(-np.pi,np.pi-np.pi*2/1023,1024)
 total_loss=omega_p/omega_m/Q_totp*2*np.pi
 D=-0.5*beta2*L_d
 delta_kerr = n2*omega_s*L_d/(c0*A_s) # Kerr效应的系数δ
@@ -192,11 +192,18 @@ for _i in range(save_round):
 """main loop end"""
 
 
-A_save=np.array(A_save).T
-g_save=np.array(g_save)
-E_p_save=np.array(E_p_save).T
-T=np.array(range(begin_to_save,int(save_round)))*scale
-T_G=np.array(range(int(save_round)))*scale
+plot_round = 50000
+length = len(A_save)
+A_save = A_save[length - plot_round: length]
+g_save = g_save[length - plot_round: length]
+E_p_save = E_p_save[length - plot_round: length]
+A_save = np.array(A_save).T
+g_save = np.array(g_save)
+E_p_save = np.array(E_p_save).T
+T = np.array(range(len - plot_round, length)) * scale
+# T=np.array(range(begin_to_save,int(save_round)))*scale
+T_G = np.array(range(len - plot_round, length)) * scale
+# T_G=np.array(range(int(save_round)))*scale
 x,y=np.meshgrid(T,t)
 
 # # 保存数据
