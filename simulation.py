@@ -192,17 +192,17 @@ for _i in range(save_round):
 """main loop end"""
 
 
-plot_round = 50000
 length = len(A_save)
+plot_round = length // 6
 A_save = A_save[length - plot_round: length]
 g_save = g_save[length - plot_round: length]
 E_p_save = E_p_save[length - plot_round: length]
 A_save = np.array(A_save).T
 g_save = np.array(g_save)
 E_p_save = np.array(E_p_save).T
-T = np.array(range(len - plot_round, length)) * scale
+T = np.array(range(length - plot_round, length)) * scale
 # T=np.array(range(begin_to_save,int(save_round)))*scale
-T_G = np.array(range(len - plot_round, length)) * scale
+T_G = np.array(range(length - plot_round, length)) * scale
 # T_G=np.array(range(int(save_round)))*scale
 x,y=np.meshgrid(T,t)
 
