@@ -10,7 +10,7 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
-    list_M = [0.4]
+    list_M = [1.0]
     list_P_pump = [50e-3]
     list_FSR = [25e9]
 
