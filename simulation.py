@@ -112,7 +112,7 @@ def roundtrip_evolution_for_signal(A, loss, gain, delta_kerr, steps, M, D):
     eta = 1 / steps
     for _k in range(steps): # _k循环steps次，演化一个roundtrip time，因为dT=1/steps
         # LLE 演化
-        A = A*np.exp((-loss + 1.0j*delta_kerr*abs(A**2) + 1.0j*M*np.cos(x)) * eta)
+        A = A*np.exp((-loss + 1.0j*delta_kerr*np.abs(A**2) + 1.0j*M*np.cos(x)) * eta)
         A_spectrum = fftshift(fft(A))
         r = -1.0j * D * (q*omega_m)**2 + gain/(1+(omega_m/Omega_g*q)**2)
         A_spectrum = A_spectrum*np.exp(eta*r)
@@ -142,14 +142,14 @@ def ASE(A_spectrum, g, l):
     ase_spectrum_modified = ase_spectrum * np.array([np.exp(1.0j * random.random() * 2 * np.pi) for i in range(1024)])
     A_spectrum += ase_spectrum_modified
     ase = ifft(ifftshift(ase_spectrum_modified))
-    ase_power = np.sum(abs(ase)**2) * delta_t / T_R
+    ase_power = np.sum(np.abs(ase)**2) * delta_t / T_R
     # sys.stderr.write(str(ase_power))
     return A_spectrum, ase_power
 
 
 def parameter_calculation(E_p, A, g):
-    pump_power = np.sum(abs(E_p)**2) * delta_t / T_R
-    signal_power = np.sum(abs(A)**2) * delta_t / T_R
+    pump_power = np.sum(np.abs(E_p)**2) * delta_t / T_R
+    signal_power = np.sum(np.abs(A)**2) * delta_t / T_R
     rsignal_power = signal_power
     tau_prime = (1 + beta) / (1 / tau_g + (1 + beta + beta * sigma_pe / sigma_pa) * pump_power * sigma_pa * Gamma_p / h / nu_p / A_p)
     p_sat = h * nu_s * A_s / (Gamma_s * tau_prime * (sigma_sa + sigma_se / (1 + beta)))
@@ -273,11 +273,11 @@ def plot():
     # plt.show()
     print(max(spectrum_log))
 
-    signal_average_power=np.sum(abs(A_save[:,-1])**2)/T_R*delta_t
-    EO_comb_average_power=np.sum(abs(E_p_save[:,-1])**2)/T_R*delta_t
+    signal_average_power=np.sum(np.abs(A_save[:,-1])**2)/T_R*delta_t
+    EO_comb_average_power=np.sum(np.abs(E_p_save[:,-1])**2)/T_R*delta_t
     # print(signal_average_power)
     # print(EO_comb_average_power)
-    print("EO comb peak power = "+str(np.max(abs(E_p_save[:,-1])**2)*1e3)+" mW")
+    print("EO comb peak power = "+str(np.max(np.abs(E_p_save[:,-1])**2)*1e3)+" mW")
     print("EO comb average power = "+str(EO_comb_average_power*1e3)+" mW")
     print("从腔内输出的signal pulse: ")
     print("时域上单个pulse峰值功率(mW): ",end="")
