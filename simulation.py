@@ -1,4 +1,5 @@
 from settings_FSMLL import *
+import numba as nb
 
 if (len(sys.argv) < 5):
     print("Usage: python simulation.py M P_pump FSR dirname [debug]")
@@ -16,7 +17,7 @@ sigma_pe = 1.07e-25 # pump的发射截面: m^2
 tau_g = 10e-3 # 上能级寿命: s
 lambda_s = 1550e-9 # signal波长: m
 lambda_p = 1480e-9 # pump波长: m
-lambda_g = 85e-9 # gain带宽: m
+lambda_g = 30e-9 # gain带宽: m
 nu_s = c0 / lambda_s
 nu_p = c0 / lambda_p
 omega_p = 2 * np.pi * nu_p
@@ -26,7 +27,7 @@ A_p = 0.9e-12 # pump有效模面积: m^2
 T = 300 # 温度: K
 Gamma_s = 0.9 # signal与Er离子的模斑交叠系数
 Gamma_p = 0.9 # pump与Er离子的模斑交叠系数
-beta = np.exp(-1.0/k_B/T*h*c0*(1.0/lambda_p-1.0/lambda_s))
+beta = np.exp(-1.0 / k_B / T * h * c0 * (1.0/lambda_p - 1.0/lambda_s))
 
 
 #! Micro-cavity parameters
@@ -37,27 +38,29 @@ L_d = 5e-3 * 25e9 / FSR # 腔长: m
 T_R = 1.0 / FSR # roundtrip time: s
 omega_m = 2 * np.pi * FSR
 Omega_g = 2 * np.pi * c0 / lambda_s**2 * lambda_g # 增益的半高半宽: rad
-Q_ins = 2e6 # 腔的本征Q
-Q_exs = 2e6 # 腔的耦合Q
-Q_tots = 1.0 / (1.0/Q_ins + 1.0/Q_exs) # 腔的总Q
-Q_tots = 0.3e6
-Q_inp = 2e6 # 腔的本征Q, pump处
-Q_exp = 2e6
-Q_totp = 1.0 / (1.0/Q_inp + 1.0/Q_exp)
-Q_totp = 0.2e6
-gamma = 0 # 电光梳在波导和谐振腔耦合处的损耗
-k = omega_p/omega_m/Q_exp*2*np.pi # 电光梳在波导和谐振腔耦合处的耦合效率
-M = float(sys.argv[1])
+Q_s_in = 2e6 # 腔的本征Q
+Q_s_ex = 2e6 # 腔的耦合Q
+Q_s = 1.0 / (1.0/Q_s_in + 1.0/Q_s_ex) # 腔的总Q
+Q_s = 0.3e6
+Q_p_in = 2e6 # 腔的本征Q, pump处
+Q_p_ex = 2e6
+Q_p = 1.0 / (1.0/Q_p_in + 1.0/Q_p_ex)
+Q_p = 0.2e6
+D = -0.5 * beta2 * L_d
+delta_kerr = n2 * omega_s * L_d / (c0 * A_s) # Kerr效应的系数δ
 phi_opt = 0.0 # pump光的失谐
-t = np.linspace(-T_R/2,T_R/2-T_R/1023,1024)
-delta_t = t[-1] - t[-2]
-q = np.linspace(-512,511,1024)
-x = np.linspace(-np.pi,np.pi-np.pi*2/1023,1024)
-total_loss=omega_p/omega_m/Q_totp*2*np.pi
-D=-0.5*beta2*L_d
-delta_kerr = n2*omega_s*L_d/(c0*A_s) # Kerr效应的系数δ
-l_s=-0.5*np.log(1-2*np.pi*omega_s/Q_tots/omega_m) # Haus方程中的loss,包含signal光由于本征/耦合的损耗
-l_p_in = np.exp(-2*np.pi*omega_p/omega_m/Q_inp/2)
+gamma = 0 # 电光梳在波导和谐振腔耦合处的损耗
+k = 2 * np.pi * omega_p / omega_m / Q_p_ex # 电光梳在波导和谐振腔耦合处的耦合效率，功率
+total_loss = 2 * np.pi * omega_p / omega_m / Q_p # 电光梳的腔总损耗，功率
+l_p_in = np.pi * omega_p / omega_m / Q_p_in
+l_s = np.pi * omega_s / omega_m / Q_s # Haus方程中的loss,包含signal光由于本征/耦合的损耗
+
+t = np.linspace(-T_R/2,T_R/2-T_R/1024,1024)
+delta_t = T_R / 1024
+q = np.linspace(-512, 511, 1024)
+x = np.linspace(-np.pi, np.pi - 2*np.pi/1024, 1024)
+
+M = float(sys.argv[1])
 P_pump = float(sys.argv[2])
 prompt = "P_pump=" + str(P_pump*1000) + "mW" + ",M=" + str(M) + ",FSR=" + str(FSR/1e9) + "GHz"
 print("prompt:", prompt)
@@ -77,8 +80,8 @@ print(prompt)
 scale = 1 # 每保存一次运行scale个roundtrip time
 steps = 1
 eta = 1 / steps
-save_round = 300000
-plot_round = save_round // 6
+save_round = 100000
+plot_round = min(save_round // 6, 50000)
 begin_to_save = 0
 
 
@@ -88,7 +91,7 @@ print("save_round = " + str(save_round))
 
 
 #! Roundtrip phase model for EO comb
-def roundtrip_evolution_for_EO_comb(E_np,total_loss):
+def roundtrip_evolution_for_EO_comb(E_np, loss):
     '''一圈之后pump电场的变化,电场normalize到光功率的平方根'''
     spectrum = fftshift(fft(E_np))
     phi_micro = 0.0 # 电光调制频率的失谐
@@ -96,14 +99,15 @@ def roundtrip_evolution_for_EO_comb(E_np,total_loss):
     new_spectrum = spectrum * np.exp(-1.0j*(phi_opt+phi_micro+phi_disp))
     field = ifft(ifftshift(new_spectrum))
     new_field = \
-        total_loss \
-            * (np.sqrt(1-k) * field + 1.0j * np.sqrt(k*P_pump) * np.exp(-1.0j*phi_opt)) \
+        np.exp(-loss) \
+            * (np.sqrt(1-k) * field + 1.0j * np.sqrt(k * P_pump) * np.exp(-1.0j*phi_opt)) \
             * np.exp(1.0j*M*np.cos(omega_m*t))
     return new_field
 
 
 #! Roundtrip phase model for signal
-def roundtrip_evolution_for_signal(A, loss, gain, delta_kerr, steps):
+# @nb.jit(nopython=True)
+def roundtrip_evolution_for_signal(A, loss, gain, delta_kerr, steps, M, D):
     '''一圈之后signal电场的变化,电场normalize到光功率的平方根'''
     eta = 1 / steps
     for _k in range(steps): # _k循环steps次，演化一个roundtrip time，因为dT=1/steps
@@ -130,11 +134,11 @@ def next_g(g, g_0, signal_power, p_sat, _tau_prime):
         return g + delta_g
 
 
-def ASE(A_spectrum, g):
+def ASE(A_spectrum, g, l):
     # return A_spectrum
     N_2 = (N + (2 * g) / (Gamma_s * sigma_sa * L_d)) / (1 + beta + sigma_se / sigma_sa)
-    alpha = N_2 * Gamma_s * sigma_se * 2 * h * FSR
-    ase_spectrum = np.array([np.sqrt(alpha * (nu_s + FSR * i) * L_d) for i in range(-512, 512)])
+    alpha = max(h * FSR * sigma_se * Gamma_s * N_2 * L_d * (np.exp(2*g) - 1) / (g - l), 0)
+    ase_spectrum = np.array([np.sqrt(alpha * (nu_s + FSR * i)) for i in range(-512, 512)])
     ase_spectrum_modified = ase_spectrum * np.array([np.exp(1.0j * random.random() * 2 * np.pi) for i in range(1024)])
     A_spectrum += ase_spectrum_modified
     ase = ifft(ifftshift(ase_spectrum_modified))
@@ -150,9 +154,9 @@ def parameter_calculation(E_p, A, g):
     tau_prime = (1 + beta) / (1 / tau_g + (1 + beta + beta * sigma_pe / sigma_pa) * pump_power * sigma_pa * Gamma_p / h / nu_p / A_p)
     p_sat = h * nu_s * A_s / (Gamma_s * tau_prime * (sigma_sa + sigma_se / (1 + beta)))
     g_0 = 0.5 * Gamma_s * L_d * sigma_se * N * tau_prime / (1 + beta) * ((1 - sigma_sa / sigma_se * beta * sigma_pe / sigma_pa) * sigma_pa * Gamma_p / h / nu_p / A_p * pump_power - sigma_sa / sigma_se / tau_g)
-    l_p_Er = np.exp(0.5 * Gamma_p * L_d * N * (beta * sigma_pe * sigma_sa - sigma_pa * sigma_se) / (sigma_se + sigma_sa * (1 + beta)) + (sigma_pe * beta + sigma_pa * (1 + beta)) / (sigma_se * beta + sigma_sa * (1 + beta)) * g)
-    l_p_tot = l_p_in * l_p_Er
-    return pump_power, signal_power, rsignal_power, tau_prime, p_sat, g_0, l_p_tot
+    g_p = 0.5 * Gamma_p * L_d * N * (beta * sigma_pe * sigma_sa - sigma_pa * sigma_se) / (sigma_se + sigma_sa * (1 + beta)) + (sigma_pe * beta + sigma_pa * (1 + beta)) / (sigma_se * beta + sigma_sa * (1 + beta)) * g
+    l_p = l_p_in - g_p
+    return pump_power, signal_power, rsignal_power, tau_prime, p_sat, g_0, l_p
 
 
 def data_save(A_save, g_save, E_p_save, A, g, E_p):
@@ -165,9 +169,10 @@ def data_save(A_save, g_save, E_p_save, A, g, E_p):
 A_save = []
 g_save = []
 E_p_save = []
-E_0p=1.0j*total_loss*np.sqrt(k)/(1.0-total_loss*np.sqrt(1-k)*np.exp(-1.0j*phi_opt))*np.sqrt(P_pump)*np.exp(-1.0j*phi_opt)*np.exp(-1.0j * omega_p * t) # 初始的pump光场：未加电光调制，腔内为CW场，泵浦与耗散相平衡
+# E_0p=1.0j*total_loss*np.sqrt(k)/(1.0-total_loss*np.sqrt(1-k)*np.exp(-1.0j*phi_opt))*np.sqrt(P_pump)*np.exp(-1.0j*phi_opt)*np.exp(-1.0j * omega_p * t) # 初始的pump光场：未加电光调制，腔内为CW场，泵浦与耗散相平衡
+E_0p = np.zeros(1024) + 1.0j * np.sqrt(k * P_pump) / (np.exp(total_loss/2) - np.sqrt(1-k))
 A_0 = np.array([random.random() * np.exp(1.0j*random.random()*2*np.pi) for i in range(1024)])*1e-3 # 初始signal光场为噪声
-pump_power, signal_power, rsignal_power, tau_prime, p_sat, g_0, l_p_tot = parameter_calculation(E_0p, A_0, 0)
+pump_power, signal_power, rsignal_power, tau_prime, p_sat, g_0, l_p = parameter_calculation(E_0p, A_0, 0)
 ase_power = 0
 print("total_loss = " + str(total_loss))
 print("g_0 = ", g_0)
@@ -177,18 +182,18 @@ print("p_sat = ", p_sat)
 E_p = E_0p
 A = A_0
 g = g_0
-g = 0
+g = l_s
 
 """main loop begin"""
 for _i in range(save_round):
-    sys.stderr.write("process: %.2f%%, g = %f, pump_power = %f, signal_power = %f, p_sat = %f, l_p_tot = %f, l_s = %f, ase_power = %f(nW)      \r" % (_i/save_round * 100, g, pump_power, signal_power, p_sat, l_p_tot, l_s, ase_power * 1e9))
+    sys.stderr.write("process: %.2f%%, g = %f, pump_power = %f, signal_power = %f, p_sat = %f, l_p = %f, l_s = %f, ase_power = %f(nW)      \r" % (_i/save_round * 100, g, pump_power, signal_power, p_sat, l_p, l_s, ase_power * 1e9))
     for _j in range(scale):
-        pump_power, signal_power, rsignal_power, tau_prime, p_sat, g_0, l_p_tot = parameter_calculation(E_p, A, g)
+        pump_power, signal_power, rsignal_power, tau_prime, p_sat, g_0, l_p = parameter_calculation(E_p, A, g)
         g = next_g(g, g_0, signal_power, p_sat, tau_prime)
-        A_spectrum = roundtrip_evolution_for_signal(A, l_s, g, delta_kerr, steps)
-        A_spectrum, ase_power = ASE(A_spectrum, g)
+        A_spectrum = roundtrip_evolution_for_signal(A, l_s, g, delta_kerr, steps, M, D)
+        A_spectrum, ase_power = ASE(A_spectrum, g, l_s)
         A = ifft(ifftshift(A_spectrum))
-        E_p = roundtrip_evolution_for_EO_comb(E_p, total_loss = l_p_tot)
+        E_p = roundtrip_evolution_for_EO_comb(E_p, l_p)
     if _i >= save_round - plot_round:
         data_save(A_save, g_save, E_p_save, A, g, E_p)
 """main loop end"""
@@ -214,7 +219,7 @@ def plot():
     time_domain_p=[]
     for i in range(-1-1024*4,-1):
         time_domain_p+=list(E_p_save[:,i])
-    time_domain_p=np.array(time_domain_p)*np.sqrt(2*np.pi*omega_p/Q_exp/omega_m)*1.0j+np.sqrt(1-2*np.pi*omega_p/Q_exp/omega_m)*np.sqrt(P_pump)
+    time_domain_p=np.array(time_domain_p)*np.sqrt(2*np.pi*omega_p/Q_p_ex/omega_m)*1.0j+np.sqrt(1-2*np.pi*omega_p/Q_p_ex/omega_m)*np.sqrt(P_pump)
     spectrum_p=fftshift(fft(time_domain_p*delta_t))
     spectrum_p_log=10*np.log10(np.abs(spectrum_p/T_R/(len(time_domain_p)/1024))**2/1e-3)
     freq_list_p=np.linspace(c0/lambda_p-512*FSR,c0/lambda_p+512*FSR,len(time_domain_p))
@@ -242,7 +247,7 @@ def plot():
     time_domain=[]
     for i in range(-1-1024*8,-1):
         time_domain+=list(A_save[:,i])
-    time_domain=np.array(time_domain)*np.sqrt(2*np.pi*omega_s/Q_tots/omega_m)
+    time_domain=np.array(time_domain)*np.sqrt(2*np.pi*omega_s/Q_s/omega_m)
     spectrum=fftshift(fft(time_domain*delta_t))
     spectrum_log=10*np.log10(np.abs(spectrum/T_R/(len(time_domain)/1024))**2/1e-3)
     freq_list=np.linspace(c0/lambda_s-512*FSR,c0/lambda_s+512*FSR,len(time_domain))
@@ -288,11 +293,11 @@ def plot():
 
     # 本次运行的相关信息
     print("pump光(功率)的耦合损耗: k= "+str(k))
-    print("pump光(功率)的本征损耗: α= "+str(2*np.pi*omega_p/Q_inp/omega_m))
+    print("pump光(功率)的本征损耗: α= "+str(2*np.pi*omega_p/Q_p_in/omega_m))
     print("pump光(功率)的总损耗: l_s= "+str(total_loss))
-    print("signal光(功率)的耦合损耗: k'= "+str(2*np.pi*omega_s/Q_exs/omega_m))
-    print("signal光(功率)的本征损耗: α'= "+str(2*np.pi*omega_s/Q_ins/omega_m))
-    print("signal光(功率)的总损耗: l_s'= "+str(2*np.pi*omega_s/Q_tots/omega_m))
+    print("signal光(功率)的耦合损耗: k'= "+str(2*np.pi*omega_s/Q_s_ex/omega_m))
+    print("signal光(功率)的本征损耗: α'= "+str(2*np.pi*omega_s/Q_s_in/omega_m))
+    print("signal光(功率)的总损耗: l_s'= "+str(2*np.pi*omega_s/Q_s/omega_m))
 
     plt.figure("Gain",figsize=(14,7),dpi=100)
     plt.plot(T_G[::],g_save[::],color="red",label="Gain")
@@ -316,16 +321,16 @@ def plot():
     plt.cla()
     plt.close()
 
-    plt.figure("Time Evolution2",figsize=(10,4),dpi=100)
-    plt.contourf(x,y*1e12,1000*np.abs(E_p_save)**2,100,cmap=cm.jet)
-    plt.xlabel("Roundtrip")
-    plt.ylabel("t (ps)")
-    plt.title("Intra-cavity pump Evolution (mW)")
-    plt.colorbar()
-    plt.savefig(prompt + "_pump_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
-    # plt.show()
-    plt.cla()
-    plt.close()
+    # plt.figure("Time Evolution2",figsize=(10,4),dpi=100)
+    # plt.contourf(x,y*1e12,1000*np.abs(E_p_save)**2,100,cmap=cm.jet)
+    # plt.xlabel("Roundtrip")
+    # plt.ylabel("t (ps)")
+    # plt.title("Intra-cavity pump Evolution (mW)")
+    # plt.colorbar()
+    # plt.savefig(prompt + "_pump_evolution" + ".png",dpi=300,transparent=True,bbox_inches="tight")
+    # # plt.show()
+    # plt.cla()
+    # plt.close()
 
 
 plot()
