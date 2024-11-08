@@ -78,7 +78,7 @@ steps = 1;
 eta = 1 / steps;
 save_round = 100000;
 plot_round = min(round(save_round / 6), 50000);
-% plot_round = save_round;
+plot_round = save_round;
 begin_to_save = 0;
 
 % Display simulation parameters
@@ -163,8 +163,8 @@ for round_index = 1:save_round
         E_p = roundtrip_evolution_for_EO_comb(E_p, l_p, M, t, omega_m, k, P_pump, phi_opt, phi_disp);
     end
     % fprintf('Process: %.2f%%, g = %.6f, pump_power = %.6f, signal_power = %.6f, p_sat = %.6f, l_p = %.6f, l_s = %.6f\r', round_index / save_round * 100, g, pump_power, signal_power, p_sat, l_p, l_s);
-    if round_index >= save_round - plot_round
-        index = round_index - save_round + plot_round + 1;
+    if round_index > save_round - plot_round
+        index = round_index - save_round + plot_round;
         A_save(index, :) = A;
         g_save(index) = g;
         E_p_save(index, :) = E_p;
@@ -193,40 +193,33 @@ fprintf('Signal power intrinsic loss (alpha'') = %.3f\n', 2 * pi * omega_s / Q_s
 fprintf('Signal power total loss (l_s'') = %.3f\n', 2 * pi * omega_s / Q_s / omega_m);
 
 
-% 假设 A_save、g_save、E_p_save 已通过预分配并在主循环中存储了数据
 
-% 转换成适合绘图的数据形式
-A_magnitude = abs(A_save).^2;   % 获取信号场的强度
-g_data = real(g_save);        % 增益的实部
-pump_power_data = abs(E_p_save).^2; % 泵浦功率
+A_magnitude = abs(A_save).^2;
+g_data = real(g_save);
+pump_power_data = abs(E_p_save).^2;
 
-% 示例绘图
+
 figure;
 
-% 1. 绘制增益随时间的变化
 subplot(3,1,1);
-plot(1:plot_round+1, g_data, 'LineWidth', 1.5);
+plot(1:plot_round, g_data, 'LineWidth', 1.5);
 title('Gain Evolution');
-xlim([1, plot_round+1]);
+xlim([1, plot_round]);
 xlabel('Roundtrip Number');
 ylabel('Gain');
 % grid on;
 
-% 2. 绘制信号场强度
 subplot(3,1,2);
-imagesc(1:plot_round+1, 1:mode_number, A_magnitude');
+imagesc(1:plot_round, 1:mode_number, A_magnitude');
 title('Signal Field Intensity');
 xlabel('Roundtrip Number');
 ylabel('Mode Number');
 % colorbar;
 % colormap jet;
 
-% 3. 绘制泵浦功率随时间的变化
 subplot(3,1,3);
-imagesc(1:plot_round+1, 1:mode_number, pump_power_data');
+imagesc(1:plot_round, 1:mode_number, pump_power_data');
 title('Pump Power Evolution');
 xlabel('Roundtrip Number');
 ylabel('Pump Power (W)');
 % grid on;
-
-% 根据需要，可以添加更多绘图和后处理逻辑
